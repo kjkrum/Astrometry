@@ -77,23 +77,10 @@ namespace CodeConCarne.Astrometry.Sphere
 					id <<= 2;
 					Midpoints(a);
 					// "Beyond depth 7, the curvature becomes irrelevant..."
-					//
-					// only normalizing below depth 4 still produces a good
-					// distribution, with a middle to corner area ratio of
-					// 2.113 instead of 2.106.
-					if (d < 4)
-					{
-						Normalize(a);
-					}
-					// middle first because it's slightly larger
-					if (Intersect(a, M0, M1, M2))
-					{
-						id += 3;
-						Copy(a, M0, V0);
-						Copy(a, M1, V1);
-						Copy(a, M2, V2);
-						continue;
-					}
+					// normalizing at all depths reduces trixel ID differences at depth 20
+					// by over 95% compared to only normalizing below depth 8
+					Normalize(a);
+
 					// corner 0
 					if (Intersect(a, V0, M2, M1))
 					{
@@ -111,16 +98,25 @@ namespace CodeConCarne.Astrometry.Sphere
 						continue;
 					}
 					// corner 2
-#if DEBUG
 					if (Intersect(a, V2, M1, M0))
 					{
-#endif
 						id += 2;
 						Copy(a, V2, V0);
 						Copy(a, M1, V1);
 						Copy(a, M0, V2);
-#if DEBUG
 						continue;
+					}
+					// middle
+#if DEBUG
+					if (Intersect(a, M0, M1, M2))
+					{
+#endif
+						id += 3;
+						Copy(a, M0, V0);
+						Copy(a, M1, V1);
+						Copy(a, M2, V2);
+#if DEBUG
+					continue;
 					}
 					throw new Exception("no intersection found");
 #endif
@@ -228,19 +224,42 @@ namespace CodeConCarne.Astrometry.Sphere
 
 		unsafe private static int Face(double* a)
 		{
-			return (a[C + 2] < 0 ? 4 : 0) + (a[C + 1] < 0 ? 2 : 0) + (a[C + 0] < 0 ? 1 : 0);
+			// based on reference Trixel.startpane
+			if ((a[C + 0] > 0) && (a[C + 1] >= 0))
+			{
+				return (a[C + 2] >= 0) ? 7 : 0;
+			}
+			else if ((a[C + 0] <= 0) && (a[C + 1] > 0))
+			{
+				return (a[C + 2] >= 0) ? 6 : 1;
+			}
+			else if ((a[C + 0] < 0) && (a[C + 1] <= 0))
+			{
+				return (a[C + 2] >= 0) ? 5 : 2;
+			}
+			else if ((a[C + 0] >= 0) && (a[C + 1] < 0))
+			{
+				return (a[C + 2] >= 0) ? 4 : 3;
+			}
+			// above conditions don't cover all inputs
+			// else is reached with coords 0, 0, 1
+			else
+			{
+				return (a[C + 2] >= 0) ? 7 : 0;
+			}
 		}
 
+		// faces and vertices reordered to correspond with reference implementation
 		private static readonly double[] INIT = new double[]
 		{
-			0, 0, 1,    1, 0, 0,    0, 1, 0,
-			0, 0, 1,    0, 1, 0,    -1, 0, 0,
-			0, 0, 1,    0, -1, 0,   1, 0, 0,
-			0, 0, 1,    -1, 0, 0,   0, -1, 0,
-			0, 0, -1,   0, 1, 0,    1, 0, 0,
-			0, 0, -1,   -1, 0, 0,   0, 1, 0,
-			0, 0, -1,   1, 0, 0,    0, -1, 0,
-			0, 0, -1,   0, -1, 0,   -1, 0, 0
+			1, 0, 0,    0, 0, -1,   0, 1, 0,	// S0
+			0, 1, 0,    0, 0, -1,   -1, 0, 0,	// S1
+			-1, 0, 0,   0, 0, -1,   0, -1, 0,	// S2
+			0, -1, 0,   0, 0, -1,   1, 0, 0,	// S3
+			1, 0, 0,    0, 0, 1,    0, -1, 0,	// N0
+			0, -1, 0,   0, 0, 1,    -1, 0, 0,	// N1
+			-1, 0, 0,   0, 0, 1,    0, 1, 0,	// N2
+			0, 1, 0,    0, 0, 1,    1, 0, 0		// N3
 		};
 	}
 }
