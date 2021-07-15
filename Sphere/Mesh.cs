@@ -1,5 +1,7 @@
 ﻿using Dawn;
 using System;
+using System.Runtime.CompilerServices;
+using static CodeConCarne.Astrometry.Sphere.Scratch;
 
 namespace CodeConCarne.Astrometry.Sphere
 {
@@ -11,46 +13,29 @@ namespace CodeConCarne.Astrometry.Sphere
 		// comment in reference implementation said this epsilon value failed, but it seems to work
 		internal const double EPSILON = 1E-15;
 
-		// order of offsets affects performance
-		// maybe proximity of reads and writes
-		private const int V0 = 0;
-		private const int M2 = 3;
-		private const int V1 = 6;
-		private const int M0 = 9;
-		private const int V2 = 12;
-		private const int M1 = 15;
-
-		private const int E = 18;
-		private const int C = 21;
-		private const int P = 24;
-		private const int T = 27;
-
-		public static double[] Scratch()
+		public static long Id(double x, double y, double z, int depth, Scratch scratch)
 		{
-			return new double[30];
+			var a = scratch.Array;
+			a[C + 0] = x;
+			a[C + 1] = y;
+			a[C + 2] = z;
+			return Calc(depth, a);
 		}
 
-		public static long Id(double x, double y, double z, int depth, double[] scratch)
+		public static Trixel Trixel(double x, double y, double z, int depth, Scratch scratch)
 		{
-			scratch[C + 0] = x;
-			scratch[C + 1] = y;
-			scratch[C + 2] = z;
-			return Calc(depth, scratch);
-		}
-
-		public static Trixel Trixel(double x, double y, double z, int depth, double[] scratch)
-		{
-			scratch[C + 0] = x;
-			scratch[C + 1] = y;
-			scratch[C + 2] = z;
-			var id = Calc(depth, scratch);
-			var v0 = new Vertex(scratch[V0 + 0], scratch[V0 + 1], scratch[V0 + 2]);
-			var v1 = new Vertex(scratch[V1 + 0], scratch[V1 + 1], scratch[V1 + 2]);
-			var v2 = new Vertex(scratch[V2 + 0], scratch[V2 + 1], scratch[V2 + 2]);
+			var a = scratch.Array;
+			a[C + 0] = x;
+			a[C + 1] = y;
+			a[C + 2] = z;
+			var id = Calc(depth, a);
+			var v0 = new Vertex(a[V0 + 0], a[V0 + 1], a[V0 + 2]);
+			var v1 = new Vertex(a[V1 + 0], a[V1 + 1], a[V1 + 2]);
+			var v2 = new Vertex(a[V2 + 0], a[V2 + 1], a[V2 + 2]);
 			return new Trixel(id, depth, v0, v1, v2);
 		}
 
-		unsafe private static long Calc(int depth, double[] scratch)
+		unsafe private static long Calc(int depth, double[] array)
 		{
 			// from the paper:
 			//
@@ -60,17 +45,15 @@ namespace CodeConCarne.Astrometry.Sphere
 			// on the earth’s surface.)"
 			//
 			// this manifests as no ray-triangle intersection at depth 25 or 26.
-
 			Guard.Argument(depth, nameof(depth)).InRange(0, 20);
-			Guard.Argument(scratch, nameof(scratch)).Count(30);
 
-			fixed (double* a = scratch)
+			fixed (double* a = array)
 			{
 				var face = Face(a);
 				var id = 0b1000L + face;
-				Array.Copy(INIT, face * 9 + 0, scratch, V0, 3);
-				Array.Copy(INIT, face * 9 + 3, scratch, V1, 3);
-				Array.Copy(INIT, face * 9 + 6, scratch, V2, 3);
+				Array.Copy(INIT, face * 9 + 0, array, V0, 3);
+				Array.Copy(INIT, face * 9 + 3, array, V1, 3);
+				Array.Copy(INIT, face * 9 + 6, array, V2, 3);
 
 				for (int d = 0; d < depth; ++d)
 				{
@@ -81,11 +64,19 @@ namespace CodeConCarne.Astrometry.Sphere
 					// only normalizing below depth 4 still produces a good
 					// distribution, with a middle to corner area ratio of
 					// 2.113 instead of 2.106.
-					if (d < 4)
+					//
+					// in combination with other changes, normalizing at all
+					// depths greatly improves compatibility with reference
+					// implementation. may also be necessary for computing
+					// halfspaces.
+					if (d < 8)
 					{
 						Normalize(a);
 					}
+
 					// middle first because it's slightly larger
+					// size difference between middle and corners is greater at shallower depths
+					// but even at depth 20, IDs consist of about 34% middle children overall
 					if (Intersect(a, M0, M1, M2))
 					{
 						id += 3;
@@ -94,6 +85,7 @@ namespace CodeConCarne.Astrometry.Sphere
 						Copy(a, M2, V2);
 						continue;
 					}
+
 					// corner 0
 					if (Intersect(a, V0, M2, M1))
 					{
@@ -101,6 +93,7 @@ namespace CodeConCarne.Astrometry.Sphere
 						Copy(a, M1, V2);
 						continue;
 					}
+
 					// corner 1
 					if (Intersect(a, V1, M0, M2))
 					{
@@ -110,6 +103,7 @@ namespace CodeConCarne.Astrometry.Sphere
 						Copy(a, M2, V2);
 						continue;
 					}
+
 					// corner 2
 #if DEBUG
 					if (Intersect(a, V2, M1, M0))
@@ -132,6 +126,7 @@ namespace CodeConCarne.Astrometry.Sphere
 		// nice explanation of Möller-Trumbore
 		// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		unsafe private static bool Intersect(double* a, int v0, int v1, int v2)
 		{
 			// switched edges when excluding backface intersection
@@ -152,6 +147,7 @@ namespace CodeConCarne.Astrometry.Sphere
 			return v >= 0 && u + v <= 1;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		unsafe private static void Negate(double* a, int value, int result)
 		{
 			a[result + 0] = -a[value + 0];
@@ -159,6 +155,7 @@ namespace CodeConCarne.Astrometry.Sphere
 			a[result + 2] = -a[value + 2];
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		unsafe private static void Cross(double* a, int left, int right, int result)
 		{
 			a[result + 0] = a[left + 1] * a[right + 2] - a[left + 2] * a[right + 1];
@@ -166,11 +163,13 @@ namespace CodeConCarne.Astrometry.Sphere
 			a[result + 2] = a[left + 0] * a[right + 1] - a[left + 1] * a[right + 0];
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		unsafe private static double Dot(double* a, int left, int right)
 		{
 			return a[left + 0] * a[right + 0] + a[left + 1] * a[right + 1] + a[left + 2] * a[right + 2];
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		unsafe private static void Subtract(double* a, int left, int right, int result)
 		{
 			a[result + 0] = a[left + 0] - a[right + 0];
@@ -178,6 +177,7 @@ namespace CodeConCarne.Astrometry.Sphere
 			a[result + 2] = a[left + 2] - a[right + 2];
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		unsafe private static void Midpoints(double* a)
 		{
 			a[M0 + 0] = (a[V1 + 0] + a[V2 + 0]) / 2;
@@ -193,6 +193,7 @@ namespace CodeConCarne.Astrometry.Sphere
 			a[M2 + 2] = (a[V0 + 2] + a[V1 + 2]) / 2;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		unsafe private static void Normalize(double* a)
 		{
 			var d = Distance(a, M0);
@@ -211,6 +212,7 @@ namespace CodeConCarne.Astrometry.Sphere
 			a[M2 + 2] /= d;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		unsafe private static double Distance(double* a, int i)
 		{
 			var x = a[i + 0];
@@ -219,6 +221,7 @@ namespace CodeConCarne.Astrometry.Sphere
 			return Math.Sqrt(x * x + y * y + z * z);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		unsafe private static void Copy(double* a, int src, int dst)
 		{
 			a[dst + 0] = a[src + 0];

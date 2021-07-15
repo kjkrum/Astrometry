@@ -2,7 +2,7 @@
 
 namespace CodeConCarne.Astrometry
 {
-	public struct Vertex
+	public readonly struct Vertex
 	{
 		readonly public double X;
 		readonly public double Y;

@@ -2,7 +2,7 @@
 
 namespace CodeConCarne.Astrometry
 {
-	public struct Trixel
+	public readonly struct Trixel
 	{
 		readonly public long Id;
 		readonly public int Depth;
