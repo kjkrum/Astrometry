@@ -2,20 +2,20 @@
 
 namespace CodeConCarne.Astrometry
 {
-	public readonly struct Vertex
+	public readonly struct Vector
 	{
 		readonly public double X;
 		readonly public double Y;
 		readonly public double Z;
 
-		internal Vertex(double x, double y, double z)
+		internal Vector(double x, double y, double z)
 		{
 			X = x;
 			Y = y;
 			Z = z;
 		}
 
-		public double Distance(Vertex other)
+		public double Distance(Vector other)
 		{
 			var x = X - other.X;
 			var y = Y - other.Y;

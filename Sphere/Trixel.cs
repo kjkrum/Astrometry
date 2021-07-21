@@ -6,11 +6,11 @@ namespace CodeConCarne.Astrometry
 	{
 		readonly public long Id;
 		readonly public int Depth;
-		readonly public Vertex V0;
-		readonly public Vertex V1;
-		readonly public Vertex V2;
+		readonly public Vector V0;
+		readonly public Vector V1;
+		readonly public Vector V2;
 
-		internal Trixel(long id, int depth, Vertex v0, Vertex v1, Vertex v2)
+		internal Trixel(long id, int depth, Vector v0, Vector v1, Vector v2)
 		{
 			Id = id;
 			Depth = depth;

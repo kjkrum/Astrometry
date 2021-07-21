@@ -29,9 +29,9 @@ namespace CodeConCarne.Astrometry.Sphere
 			a[C + 1] = y;
 			a[C + 2] = z;
 			var id = Calc(depth, a);
-			var v0 = new Vertex(a[V0 + 0], a[V0 + 1], a[V0 + 2]);
-			var v1 = new Vertex(a[V1 + 0], a[V1 + 1], a[V1 + 2]);
-			var v2 = new Vertex(a[V2 + 0], a[V2 + 1], a[V2 + 2]);
+			var v0 = new Vector(a[V0 + 0], a[V0 + 1], a[V0 + 2]);
+			var v1 = new Vector(a[V1 + 0], a[V1 + 1], a[V1 + 2]);
+			var v2 = new Vector(a[V2 + 0], a[V2 + 1], a[V2 + 2]);
 			return new Trixel(id, depth, v0, v1, v2);
 		}
 
