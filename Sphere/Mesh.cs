@@ -1,7 +1,6 @@
 ﻿using Dawn;
 using System;
 using System.Runtime.CompilerServices;
-using static CodeConCarne.Astrometry.Sphere.Scratch;
 
 namespace CodeConCarne.Astrometry.Sphere
 {
@@ -10,11 +9,14 @@ namespace CodeConCarne.Astrometry.Sphere
 
 	public static class Mesh
 	{
+		public const int MIN_DEPTH = 1;
+		public const int MAX_DEPTH = 20;
+
 		// comment in reference implementation said this epsilon value failed, but it seems to work
 		internal const double EPSILON = 1E-15;
 
 		public static long Id(double x, double y, double z, int depth, Scratch scratch)
-		{			
+		{
 			return Calc(x, y, z, depth, scratch);
 		}
 
@@ -34,9 +36,9 @@ namespace CodeConCarne.Astrometry.Sphere
 			// on the earth’s surface.)"
 			//
 			// this manifests as no ray-triangle intersection at depth 25 or 26.
-			Guard.Argument(depth, nameof(depth)).InRange(0, 20);
+			Guard.Argument(depth, nameof(depth)).InRange(MIN_DEPTH, MAX_DEPTH);
 
-			var id = Octahedron.Init(x, y, z, scratch);
+			var id = Init(x, y, z, scratch);
 
 			fixed (double* a = scratch.Array)
 			{
@@ -212,6 +214,52 @@ namespace CodeConCarne.Astrometry.Sphere
 			a[dst + 0] = a[src + 0];
 			a[dst + 1] = a[src + 1];
 			a[dst + 2] = a[src + 2];
+		}
+
+		private readonly static Trixel[] FACES = new Trixel[]
+		{
+			new Trixel(0b1000, 1, new Vector(0, 0, 1), new Vector(1, 0, 0), new Vector(0, 1, 0)),
+			new Trixel(0b1001, 1, new Vector(0, 0, 1), new Vector(0, 1, 0), new Vector(-1, 0, 0)),
+			new Trixel(0b1010, 1, new Vector(0, 0, 1), new Vector(0, -1, 0), new Vector(1, 0, 0)),
+			new Trixel(0b1011, 1, new Vector(0, 0, 1), new Vector(-1, 0, 0), new Vector(0, -1, 0)),
+			new Trixel(0b1100, 1, new Vector(0, 0, -1), new Vector(0, 1, 0), new Vector(1, 0, 0)),
+			new Trixel(0b1101, 1, new Vector(0, 0, -1), new Vector(-1, 0, 0), new Vector(0, 1, 0)),
+			new Trixel(0b1110, 1, new Vector(0, 0, -1), new Vector(1, 0, 0), new Vector(0, -1, 0)),
+			new Trixel(0b1111, 1, new Vector(0, 0, -1), new Vector(0, -1, 0), new Vector(-1, 0, 0)),
+		};
+
+		private static long Init(double x, double y, double z, Scratch scratch)
+		{
+			var i = (z < 0 ? 4 : 0) + (y < 0 ? 2 : 0) + (x < 0 ? 1 : 0);
+			var t = FACES[i];
+			var a = scratch.Array;
+			a[C + 0] = x;
+			a[C + 1] = y;
+			a[C + 2] = z;
+			t.V0.CopyTo(a, V0);
+			t.V1.CopyTo(a, V1);
+			t.V2.CopyTo(a, V2);
+			return t.Id;
+		}
+
+		// offsets into Scratch.Array
+		// order affects performance
+		// maybe proximity of reads and writes
+		internal const int V0 = 0;
+		internal const int M2 = 3;
+		internal const int V1 = 6;
+		internal const int M0 = 9;
+		internal const int V2 = 12;
+		internal const int M1 = 15;
+
+		internal const int E = 18;
+		internal const int C = 21;
+		internal const int P = 24;
+		internal const int T = 27;
+
+		public class Scratch
+		{
+			internal double[] Array = new double[30];
 		}
 	}
 }

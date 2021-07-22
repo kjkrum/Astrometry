@@ -20,13 +20,13 @@ namespace CodeConCarne.Astrometry
 			V2 = v2;
 		}
 
-		internal Trixel(long id, int depth, Scratch scratch)
+		internal Trixel(long id, int depth, Mesh.Scratch scratch)
 		{
 			Id = id;
 			Depth = depth;
-			V0 = new Vector(scratch.Array, Scratch.V0);
-			V1 = new Vector(scratch.Array, Scratch.V1);
-			V2 = new Vector(scratch.Array, Scratch.V2);
+			V0 = new Vector(scratch.Array, Mesh.V0);
+			V1 = new Vector(scratch.Array, Mesh.V1);
+			V2 = new Vector(scratch.Array, Mesh.V2);
 		}
 
 		public double Area()

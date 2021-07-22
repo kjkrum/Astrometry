@@ -27,11 +27,11 @@ namespace Sphere.Test
 				ay[i] = y;
 				az[i] = z;
 			}
-			var scratch = new Scratch();
+			var scratch = new Mesh.Scratch();
 			var start = DateTime.UtcNow;
 			for (int i = 0; i < n; ++i)
 			{
-				Mesh.Id(ax[i], ay[i], az[i], 20, scratch);
+				_ = Mesh.Id(ax[i], ay[i], az[i], 20, scratch);
 			}
 			var end = DateTime.UtcNow;
 			var elapsed = end - start;
@@ -45,7 +45,7 @@ namespace Sphere.Test
 		[TestMethod]
 		public void AreaRatio()
 		{
-			var scratch = new Scratch();
+			var scratch = new Mesh.Scratch();
 			var corner = Mesh.Trixel(0, 0, 1, 20, scratch);
 			Assert.AreEqual(0b10000000000000000000000000000000000000000000L, corner.Id);
 			var middle = Mesh.Trixel(1, 1, 1, 20, scratch);
@@ -64,7 +64,7 @@ namespace Sphere.Test
 			var n = 1_000_000;
 			var d = 20;
 			var rand = new Random();
-			var scratch = new Scratch();
+			var scratch = new Mesh.Scratch();
 			var count = new int[4];
 			for(int i = 0; i < n; ++i)
 			{
