@@ -15,7 +15,21 @@ namespace CodeConCarne.Astrometry
 			Z = z;
 		}
 
-		public double Distance(Vector other)
+		internal Vector(double[] a, int i)
+		{
+			X = a[i + 0];
+			Y = a[i + 1];
+			Z = a[i + 2];
+		}
+
+		internal void CopyTo(double[] a, int i)
+		{
+			a[i + 0] = X;
+			a[i + 1] = Y;
+			a[i + 2] = Z;
+		}
+
+		internal double Distance(Vector other)
 		{
 			var x = X - other.X;
 			var y = Y - other.Y;

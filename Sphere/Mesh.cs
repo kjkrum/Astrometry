@@ -14,28 +14,17 @@ namespace CodeConCarne.Astrometry.Sphere
 		internal const double EPSILON = 1E-15;
 
 		public static long Id(double x, double y, double z, int depth, Scratch scratch)
-		{
-			var a = scratch.Array;
-			a[C + 0] = x;
-			a[C + 1] = y;
-			a[C + 2] = z;
-			return Calc(depth, a);
+		{			
+			return Calc(x, y, z, depth, scratch);
 		}
 
 		public static Trixel Trixel(double x, double y, double z, int depth, Scratch scratch)
 		{
-			var a = scratch.Array;
-			a[C + 0] = x;
-			a[C + 1] = y;
-			a[C + 2] = z;
-			var id = Calc(depth, a);
-			var v0 = new Vector(a[V0 + 0], a[V0 + 1], a[V0 + 2]);
-			var v1 = new Vector(a[V1 + 0], a[V1 + 1], a[V1 + 2]);
-			var v2 = new Vector(a[V2 + 0], a[V2 + 1], a[V2 + 2]);
-			return new Trixel(id, depth, v0, v1, v2);
+			var id = Calc(x, y, z, depth, scratch);
+			return new Trixel(id, depth, scratch);
 		}
 
-		unsafe private static long Calc(int depth, double[] array)
+		unsafe private static long Calc(double x, double y, double z, int depth, Scratch scratch)
 		{
 			// from the paper:
 			//
@@ -47,14 +36,10 @@ namespace CodeConCarne.Astrometry.Sphere
 			// this manifests as no ray-triangle intersection at depth 25 or 26.
 			Guard.Argument(depth, nameof(depth)).InRange(0, 20);
 
-			fixed (double* a = array)
-			{
-				var face = Face(a);
-				var id = 0b1000L + face;
-				Array.Copy(INIT, face * 9 + 0, array, V0, 3);
-				Array.Copy(INIT, face * 9 + 3, array, V1, 3);
-				Array.Copy(INIT, face * 9 + 6, array, V2, 3);
+			var id = Octahedron.Init(x, y, z, scratch);
 
+			fixed (double* a = scratch.Array)
+			{
 				for (int d = 0; d < depth; ++d)
 				{
 					id <<= 2;
@@ -228,22 +213,5 @@ namespace CodeConCarne.Astrometry.Sphere
 			a[dst + 1] = a[src + 1];
 			a[dst + 2] = a[src + 2];
 		}
-
-		unsafe private static int Face(double* a)
-		{
-			return (a[C + 2] < 0 ? 4 : 0) + (a[C + 1] < 0 ? 2 : 0) + (a[C + 0] < 0 ? 1 : 0);
-		}
-
-		private static readonly double[] INIT = new double[]
-		{
-			0, 0, 1,    1, 0, 0,    0, 1, 0,
-			0, 0, 1,    0, 1, 0,    -1, 0, 0,
-			0, 0, 1,    0, -1, 0,   1, 0, 0,
-			0, 0, 1,    -1, 0, 0,   0, -1, 0,
-			0, 0, -1,   0, 1, 0,    1, 0, 0,
-			0, 0, -1,   -1, 0, 0,   0, 1, 0,
-			0, 0, -1,   1, 0, 0,    0, -1, 0,
-			0, 0, -1,   0, -1, 0,   -1, 0, 0
-		};
 	}
 }
