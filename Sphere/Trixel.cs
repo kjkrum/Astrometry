@@ -24,9 +24,9 @@ namespace CodeConCarne.Astrometry
 		{
 			Id = id;
 			Depth = depth;
-			V0 = new Vector(scratch.Array, Mesh.V0);
-			V1 = new Vector(scratch.Array, Mesh.V1);
-			V2 = new Vector(scratch.Array, Mesh.V2);
+			V0 = new Vector(scratch.Array, Mesh.Scratch.V0);
+			V1 = new Vector(scratch.Array, Mesh.Scratch.V1);
+			V2 = new Vector(scratch.Array, Mesh.Scratch.V2);
 		}
 
 		public double Area()
