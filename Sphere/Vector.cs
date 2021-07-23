@@ -4,11 +4,13 @@ namespace CodeConCarne.Astrometry
 {
 	public readonly struct Vector
 	{
+		internal static readonly Vector ORIGIN = new Vector(0, 0, 0);
+
 		readonly public double X;
 		readonly public double Y;
 		readonly public double Z;
 
-		internal Vector(double x, double y, double z)
+		public Vector(double x, double y, double z)
 		{
 			X = x;
 			Y = y;
@@ -35,6 +37,11 @@ namespace CodeConCarne.Astrometry
 			var y = Y - other.Y;
 			var z = Z - other.Z;
 			return Math.Sqrt(x * x + y * y + z * z);
+		}
+
+		internal double Dot(Vector other)
+		{
+			return X * other.X + Y * other.Y + Z * other.Z;
 		}
 	}
 }

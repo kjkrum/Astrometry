@@ -29,13 +29,21 @@
 			var i = (z < 0 ? 4 : 0) + (y < 0 ? 2 : 0) + (x < 0 ? 1 : 0);
 			var t = T[i];
 			var a = scratch.Array;
-			a[Mesh.Scratch.C + 0] = x;
-			a[Mesh.Scratch.C + 1] = y;
-			a[Mesh.Scratch.C + 2] = z;
-			t.V0.CopyTo(a, Mesh.Scratch.V0);
-			t.V1.CopyTo(a, Mesh.Scratch.V1);
-			t.V2.CopyTo(a, Mesh.Scratch.V2);
+			a[Mesh.C + 0] = x;
+			a[Mesh.C + 1] = y;
+			a[Mesh.C + 2] = z;
+			t.V0.CopyTo(a, Mesh.V0);
+			t.V1.CopyTo(a, Mesh.V1);
+			t.V2.CopyTo(a, Mesh.V2);
 			return t.Id;
+		}
+
+		internal static void Init(Cover.Scratch scratch)
+		{
+			for (int i = 0; i < T.Length; ++i)
+			{
+				scratch.Queue.Enqueue(T[i]);
+			}
 		}
 	}
 }

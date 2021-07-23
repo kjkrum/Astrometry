@@ -1,7 +1,6 @@
 ﻿using Dawn;
 using System;
 using System.Runtime.CompilerServices;
-using static CodeConCarne.Astrometry.Sphere.Mesh.Scratch;
 
 namespace CodeConCarne.Astrometry.Sphere
 {
@@ -10,7 +9,7 @@ namespace CodeConCarne.Astrometry.Sphere
 
 	public static class Mesh
 	{
-		public const int MIN_DEPTH = 1;
+		public const int MIN_DEPTH = 0;
 		public const int MAX_DEPTH = 20;
 
 		// comment in reference implementation said this epsilon value failed, but it seems to work
@@ -29,8 +28,6 @@ namespace CodeConCarne.Astrometry.Sphere
 
 		unsafe private static long Calc(double x, double y, double z, int depth, Scratch scratch)
 		{
-			// from the paper:
-			//
 			// "A 64-bit integer can hold an HtmID up to depth 31. However, standard double precision
 			// transcendental functions break down at depth 26 where the trixel sides reach dimensions
 			// below 10E-15 (depth 26 is about 10 milli-arcseconds for astronomers or 30 centimeters
@@ -53,8 +50,10 @@ namespace CodeConCarne.Astrometry.Sphere
 					//
 					// in combination with other changes, normalizing at all
 					// depths greatly improves compatibility with reference
-					// implementation. may also be necessary for computing
-					// halfspaces.
+					// implementation. deeper normalization may also mean
+					// fewer tests in trixel-halfspace intersection.
+					//
+					// TODO test performance tradeoff between indexing and computing covers
 					if (d < 8)
 					{
 						Normalize(a);
@@ -215,22 +214,22 @@ namespace CodeConCarne.Astrometry.Sphere
 			a[dst + 2] = a[src + 2];
 		}
 
+		// order of offsets affects performance
+		// maybe proximity of reads and writes
+		internal const int V0 = 0;
+		internal const int M2 = 3;
+		internal const int V1 = 6;
+		internal const int M0 = 9;
+		internal const int V2 = 12;
+		internal const int M1 = 15;
+
+		internal const int E = 18;
+		internal const int C = 21;
+		internal const int P = 24;
+		internal const int T = 27;
+
 		public class Scratch
 		{
-			// order of offsets affects performance
-			// maybe proximity of reads and writes
-			internal const int V0 = 0;
-			internal const int M2 = 3;
-			internal const int V1 = 6;
-			internal const int M0 = 9;
-			internal const int V2 = 12;
-			internal const int M1 = 15;
-
-			internal const int E = 18;
-			internal const int C = 21;
-			internal const int P = 24;
-			internal const int T = 27;
-
 			internal double[] Array = new double[30];
 		}
 	}
