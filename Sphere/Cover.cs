@@ -1,25 +1,20 @@
 ﻿using Dawn;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace CodeConCarne.Astrometry.Sphere
 {
 	public static class Cover
 	{
-		// Trixel is an object because this class stores it in collections.
-		// if we want to continue down the performance rabbit hole, consider
-		// changing it back to a struct and marshalling to an array.
-		// hmm... maybe create some collections of T where T is struct...
+		// angle/angle or angle/aspect?
+		// public static void Rectangle(Vector look, Vector up, double ax, double ay, int depth, Scratch scratch) {}
 
-		//public static void Rectangle(Vector look, Vector up, double ax, double ay, int depth) {}
-
-		public static void Circle(Vector look, double angle, int depth, Scratch scratch)
+		public static void Circle(Vector look, double angle, int depth, Scratch scratch, List<Trixel> result)
 		{
-			Guard.Argument(angle, nameof(angle)).InRange(0, 360);
+			Guard.Argument(angle, nameof(angle)).InRange(0, Math.PI);
 			Guard.Argument(depth, nameof(depth)).InRange(Mesh.MIN_DEPTH, Mesh.MAX_DEPTH);
-			var a = angle / 180 * Math.PI;
-			double distance = angle <= Math.PI ? Math.Cos(a / 2) : -Math.Cos((2 * Math.PI - a) / 2);
-			var h = new Halfspace(look, distance);
+			var h = Halfspace.FromAngle(look, angle);
 			scratch.Clear();
 			Octahedron.Init(scratch);
 			var q = scratch.Queue;
@@ -38,16 +33,18 @@ namespace CodeConCarne.Astrometry.Sphere
 					t.EnqueueChildren(q);
 				}
 			}
-			// TODO do something with cover
-			scratch.Clear();
+			result.AddRange(c);
 		}
+
+		// TODO methods to group trixels into ranges, combine ranges, etc.
 
 		private static Intersection Intersect(Trixel t, Halfspace h)
 		{
-			// TODO double check these decision trees; add references to sections in paper
+			// formula 4.1
 			var i0 = t.V0.Dot(h.Normal) > h.Distance;
 			var i1 = t.V1.Dot(h.Normal) > h.Distance;
 			var i2 = t.V2.Dot(h.Normal) > h.Distance;
+			// positive halfspace - section 4.1
 			if(h.Distance >= 0)
 			{
 				if (i0 && i1 && i2)
@@ -58,13 +55,19 @@ namespace CodeConCarne.Astrometry.Sphere
 				{
 					return Intersection.Partial;
 				}
-				// TODO check for center intersection - return partial
+				if (Hole(t, h))
+				{
+					return Intersection.Partial;
+				}
 			}
-			else // negative halfspace
+			else // negative halfspace - simplification of section 4.3 (ii)
 			{
 				if (i0 && i1 && i2)
 				{
-					// TODO check for center intersection - return partial
+					if (Hole(t, h))
+					{
+						return Intersection.Partial;
+					}
 					return Intersection.Full;
 				}
 				if (i0 || i1 || i2)
@@ -73,6 +76,23 @@ namespace CodeConCarne.Astrometry.Sphere
 				}
 			}
 			return Intersection.None;
+		}
+
+		private static bool Hole(Trixel t, Halfspace h)
+		{
+			// calculate bounding circle as a halfspace - formula 4.2
+			var v = t.V1.Subtract(t.V0).Cross(t.V2.Subtract(t.V1));
+			v = v.DivideBy(v.Magnitude());
+			// TODO does only normalizing to depth 7 significantly affect d?
+			var d = t.V0.Dot(v);
+			var b = Halfspace.FromDistance(v, d);
+			// if bounding circle overlaps halfspace
+			if(h.Normal.Angle(b.Normal) < h.Angle + b.Angle)
+			{
+				// TODO if edge intersects return true - section 4.2 / figure 9(d)
+				// TODO if fully inside return true - formula 4.3 / figure 9(e)
+			}
+			return false;
 		}
 
 		public class Scratch

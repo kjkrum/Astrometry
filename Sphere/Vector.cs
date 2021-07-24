@@ -4,8 +4,6 @@ namespace CodeConCarne.Astrometry
 {
 	public readonly struct Vector
 	{
-		internal static readonly Vector ORIGIN = new Vector(0, 0, 0);
-
 		readonly public double X;
 		readonly public double Y;
 		readonly public double Z;
@@ -39,9 +37,37 @@ namespace CodeConCarne.Astrometry
 			return Math.Sqrt(x * x + y * y + z * z);
 		}
 
+		internal double Magnitude()
+		{
+			return Math.Sqrt(X * X + Y * Y + Z * Z);
+		}
+
 		internal double Dot(Vector other)
 		{
 			return X * other.X + Y * other.Y + Z * other.Z;
+		}
+
+		internal Vector Cross(Vector other)
+		{
+			var x = Y * other.Z - Z * other.Y;
+			var y = Z * other.X - X * other.Z;
+			var z = X * other.Y - Y * other.X;
+			return new Vector(x, y, z);
+		}
+
+		internal Vector Subtract(Vector other)
+		{
+			return new Vector(X - other.X, Y - other.Y, Z - other.Z);
+		}
+
+		internal Vector DivideBy(double value)
+		{
+			return new Vector(X / value, Y / value, Z / value);
+		}
+
+		public double Angle(Vector other)
+		{
+			return Math.Acos(Dot(other) / (Magnitude() * other.Magnitude()));
 		}
 	}
 }

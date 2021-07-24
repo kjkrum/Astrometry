@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace CodeConCarne.Astrometry
 {
-	public sealed class Trixel
+	public readonly struct Trixel
 	{
 		readonly public long Id;
 		readonly public int Depth;
@@ -43,7 +43,7 @@ namespace CodeConCarne.Astrometry
 		{
 			var id = Id << 2;
 			var depth = Depth + 1;
-			var normalize = depth > 8; // same condition in Mesh
+			var normalize = depth < 8; // same condition in Mesh
 			var m0 = Midpoint(V1, V2, normalize);
 			var m1 = Midpoint(V2, V0, normalize);
 			var m2 = Midpoint(V0, V1, normalize);
@@ -59,7 +59,7 @@ namespace CodeConCarne.Astrometry
 			var m = new Vector((v0.X + v1.X) / 2, (v0.Y + v1.Y) / 2, (v0.Z + v1.Z) / 2);
 			if(normalize)
 			{
-				var d = m.Distance(Vector.ORIGIN);
+				var d = m.Magnitude();
 				m = new Vector(m.X / d, m.Y / d, m.Z / d);
 			}
 			return m;

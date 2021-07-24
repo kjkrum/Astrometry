@@ -1,4 +1,6 @@
-﻿namespace CodeConCarne.Astrometry.Sphere
+﻿using System;
+
+namespace CodeConCarne.Astrometry.Sphere
 {
 	/// <summary>
 	/// "The halfspace is our basic geometry primitive. Each halfspace defines
@@ -10,15 +12,33 @@
 	/// the halfspace’s bounding plane, and the distance to the plane from the
 	/// origin along the vector."
 	/// </summary>
-	internal class Halfspace
+	internal readonly struct Halfspace
 	{
 		internal readonly Vector Normal;
+		internal readonly double Angle;
 		internal readonly double Distance;
 
-		internal Halfspace(Vector normal, double distance)
+		private Halfspace(Vector normal, double angle, double distance)
 		{
 			Normal = normal;
+			Angle = angle;
 			Distance = distance;
+		}
+
+		internal static Halfspace FromAngle(Vector normal, double angle)
+		{
+			var distance = angle <= Math.PI / 2 ?
+				Math.Cos(angle) :
+				Math.Sin(angle - Math.PI / 2);
+			return new Halfspace(normal, angle, distance);
+		}
+
+		internal static Halfspace FromDistance(Vector normal, double distance)
+		{
+			var angle = distance >= 0 ?
+				Math.Acos(distance) :
+				Math.Asin(distance) + Math.PI / 2;
+			return new Halfspace(normal, angle, distance);
 		}
 	}
 }
