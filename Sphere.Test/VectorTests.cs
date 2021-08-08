@@ -1,4 +1,4 @@
-﻿using CodeConCarne.Astrometry;
+﻿using CodeConCarne.Astrometry.Sphere;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 

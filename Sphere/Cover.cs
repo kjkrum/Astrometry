@@ -41,9 +41,13 @@ namespace CodeConCarne.Astrometry.Sphere
 		private static Intersection Intersect(Trixel t, Halfspace h)
 		{
 			// formula 4.1
-			var i0 = t.V0.Dot(h.Normal) > h.Distance;
-			var i1 = t.V1.Dot(h.Normal) > h.Distance;
-			var i2 = t.V2.Dot(h.Normal) > h.Distance;
+			// this use of Dot is why all Vectors are normalized
+			// TODO normalize consistently in Cover and Mesh
+			// need to understand how much normalizing at depths > 7 changes vector magnitudes
+			// and whether we need to use that difference as an epsilon value here
+			var i0 = h.Normal.Dot(t.V0) > h.Distance;
+			var i1 = h.Normal.Dot(t.V1) > h.Distance;
+			var i2 = h.Normal.Dot(t.V2) > h.Distance;
 			// positive halfspace - section 4.1
 			if(h.Distance >= 0)
 			{
@@ -86,11 +90,35 @@ namespace CodeConCarne.Astrometry.Sphere
 			// TODO does only normalizing to depth 7 significantly affect d?
 			var d = t.V0.Dot(v);
 			var b = Halfspace.FromDistance(v, d);
-			// if bounding circle overlaps halfspace
+			// if halfspace cap overlaps trixel bounding circle
 			if(h.Normal.Angle(b.Normal) < h.Angle + b.Angle)
 			{
-				// TODO if edge intersects return true - section 4.2 / figure 9(d)
-				// TODO if fully inside return true - formula 4.3 / figure 9(e)
+				// if cap intersects trixel edge return true - section 4.2 / figure 9(d)
+				// taking a different approach here...
+				// the edge of a trixel is a segment of a great circle.
+				// a great circle defines/is defined by a plane.
+				// a halfspace intersects a great circle if the angle between
+				// the halfspace's vector and the plane is less than the
+				// halfspace's angle. (if the angles are equal, the halfspace
+				// is touching the trixel but not overlapping.)
+				// any intersection must lie on the edge of the trixel
+				// because we already know the cap intersects the bounding
+				// circle of the trixel.
+				
+				// normals to the planes of the great circles
+				var n0 = t.V0.Cross(t.V1);
+				var n1 = t.V1.Cross(t.V2);
+				var n2 = t.V2.Cross(t.V0);
+
+				// TODO uncomment, review, and test
+				//if ((Math.PI / 2) - (c0.Angle(h.Normal) % (Math.PI / 2)) < h.Angle ||
+				//	(Math.PI / 2) - (c1.Angle(h.Normal) % (Math.PI / 2)) < h.Angle ||
+				//	(Math.PI / 2) - (c2.Angle(h.Normal) % (Math.PI / 2)) < h.Angle) return true;
+
+				// if cap is fully inside trixel return true - formula 4.3 / figure 9(e)
+				if (n0.Dot(h.Normal) >= 0 &&
+					n1.Dot(h.Normal) >= 0 &&
+					n2.Dot(h.Normal) >= 0) return true;
 			}
 			return false;
 		}

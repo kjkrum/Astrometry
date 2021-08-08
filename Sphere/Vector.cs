@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CodeConCarne.Astrometry
+namespace CodeConCarne.Astrometry.Sphere
 {
 	public readonly struct Vector
 	{
@@ -8,11 +8,14 @@ namespace CodeConCarne.Astrometry
 		readonly public double Y;
 		readonly public double Z;
 
+		// TODO make normalization optional?
+
 		public Vector(double x, double y, double z)
 		{
-			X = x;
-			Y = y;
-			Z = z;
+			var d = Math.Sqrt(x * x + y * y + z * z);
+			X = x / d;
+			Y = y / d;
+			Z = z / d;
 		}
 
 		internal Vector(double[] a, int i)
