@@ -56,12 +56,7 @@ namespace CodeConCarne.Astrometry
 
 		private Vector Midpoint(Vector v0, Vector v1, bool normalize)
 		{
-			var m = new Vector((v0.X + v1.X) / 2, (v0.Y + v1.Y) / 2, (v0.Z + v1.Z) / 2);
-			if(normalize)
-			{
-				var d = m.Magnitude();
-				m = new Vector(m.X / d, m.Y / d, m.Z / d);
-			}
+			var m = new Vector((v0.X + v1.X) / 2, (v0.Y + v1.Y) / 2, (v0.Z + v1.Z) / 2, normalize);
 			return m;
 		}
 

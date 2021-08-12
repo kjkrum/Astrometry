@@ -10,6 +10,7 @@ namespace CodeConCarne.Astrometry.Sphere
 		// angle/angle or angle/aspect?
 		// public static void Rectangle(Vector look, Vector up, double ax, double ay, int depth, Scratch scratch) {}
 
+		// TODO need to ensure that look is normalized, if not by this method, then by Halfspace factory
 		public static void Circle(Vector look, double angle, int depth, Scratch scratch, List<Trixel> result)
 		{
 			Guard.Argument(angle, nameof(angle)).InRange(0, Math.PI);

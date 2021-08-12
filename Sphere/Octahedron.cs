@@ -4,12 +4,12 @@
 	{
 		private readonly static Vector[] V = new Vector[]
 		{
-			new Vector(0, 0, 1),
-			new Vector(1, 0, 0),
-			new Vector(0, 1, 0),
-			new Vector(-1, 0, 0),
-			new Vector(0, -1, 0),
-			new Vector(0, 0, -1)
+			Vector.POS_Z,
+			Vector.POS_X,
+			Vector.POS_Y,
+			Vector.NEG_X,
+			Vector.NEG_Y,
+			Vector.NEG_Z
 		};
 
 		private readonly static Trixel[] T = new Trixel[]
