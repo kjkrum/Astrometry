@@ -96,30 +96,39 @@ namespace CodeConCarne.Astrometry.Sphere
 			{
 				// if cap intersects trixel edge return true - section 4.2 / figure 9(d)
 				// taking a different approach here...
-				// the edge of a trixel is a segment of a great circle.
-				// a great circle defines/is defined by a plane.
-				// a halfspace intersects a great circle if the angle between
+				// given that the edge of a trixel is a segment of a great
+				// circle, and a great circle is the intersection of a sphere
+				// with a plane intersecting the center of the sphere, then a
+				// cap overlaps the great circle if the smaller angle between
 				// the halfspace's vector and the plane is less than the
-				// halfspace's angle. (if the angles are equal, the halfspace
-				// is touching the trixel but not overlapping.)
-				// any intersection must lie on the edge of the trixel
-				// because we already know the cap intersects the bounding
-				// circle of the trixel.
-				
-				// normals to the planes of the great circles
+				// halfspace's angle. (if the angles are equal, the cap
+				// touches the trixel at one point but does not overlap.)
+				// we don't care what the points of intersection are. we know
+				// they must lie on the edge of the trixel because the cap
+				// intersects the bounding circle of the trixel.
+
+				// normals to the planes of the great circles. these point
+				// into the three halfspaces whose intersection is equivalent to the trixel.
+				// in other words, if the halfspace constructor were exposed, we could create these
+				// halfspaces as new Halfspace(n0, Math.PI / 2, 0).
 				var n0 = t.V0.Cross(t.V1);
 				var n1 = t.V1.Cross(t.V2);
 				var n2 = t.V2.Cross(t.V0);
 
-				// TODO uncomment, review, and test
-				//if ((Math.PI / 2) - (c0.Angle(h.Normal) % (Math.PI / 2)) < h.Angle ||
-				//	(Math.PI / 2) - (c1.Angle(h.Normal) % (Math.PI / 2)) < h.Angle ||
-				//	(Math.PI / 2) - (c2.Angle(h.Normal) % (Math.PI / 2)) < h.Angle) return true;
+				// TODO short circuit this condition
+				var e0 = (Math.PI / 2) - (n0.Angle(h.Normal) % (Math.PI / 2)) < h.Angle;
+				var e1 = (Math.PI / 2) - (n1.Angle(h.Normal) % (Math.PI / 2)) < h.Angle;
+				var e2 = (Math.PI / 2) - (n2.Angle(h.Normal) % (Math.PI / 2)) < h.Angle;
+				// FIXME TestCapOverlappingEdge is getting the right result for the wrong reason!
+				// this should be true for face 0 in TestCapOverlappingEdge
+				if (e0 || e1 || e2) return true;
 
 				// if cap is fully inside trixel return true - formula 4.3 / figure 9(e)
-				if (n0.Dot(h.Normal) >= 0 &&
-					n1.Dot(h.Normal) >= 0 &&
-					n2.Dot(h.Normal) >= 0) return true;
+				var d0 = n0.Dot(h.Normal);
+				var d1 = n1.Dot(h.Normal);
+				var d2 = n2.Dot(h.Normal);
+				// this should NOT be true for face 0 in TestCapOverlappingEdge
+				if (d0 >=0 && d1 >= 0 && d2 >= 0) return true;				
 			}
 			return false;
 		}

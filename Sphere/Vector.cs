@@ -4,12 +4,12 @@ namespace CodeConCarne.Astrometry.Sphere
 {
 	public readonly struct Vector
 	{
-		readonly public static Vector POS_X = new Vector(1, 0, 0);
-		readonly public static Vector POS_Y = new Vector(0, 1, 0);
-		readonly public static Vector POS_Z = new Vector(0, 0, 1);
-		readonly public static Vector NEG_X = new Vector(-1, 0, 0);
-		readonly public static Vector NEG_Y = new Vector(0, -1, 0);
-		readonly public static Vector NEG_Z = new Vector(0, 0, -1);
+		readonly public static Vector POS_X = new Vector(1, 0, 0, false);
+		readonly public static Vector POS_Y = new Vector(0, 1, 0, false);
+		readonly public static Vector POS_Z = new Vector(0, 0, 1, false);
+		readonly public static Vector NEG_X = new Vector(-1, 0, 0, false);
+		readonly public static Vector NEG_Y = new Vector(0, -1, 0, false);
+		readonly public static Vector NEG_Z = new Vector(0, 0, -1, false);
 
 		readonly public double X;
 		readonly public double Y;

@@ -12,6 +12,8 @@
 			Vector.NEG_Z
 		};
 
+		/* Vertex order is clockwise on the inside. */
+
 		private readonly static Trixel[] T = new Trixel[]
 		{
 			new Trixel(0b1000, 0, V[0], V[1], V[2]),
