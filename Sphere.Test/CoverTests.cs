@@ -51,7 +51,6 @@ namespace Sphere.Test
 			Assert.AreEqual(8, result.Count());
 			Assert.AreEqual(8, result.Where(o => o.Depth == 0).Count());
 			// at depth 1, expect 4 depth 0 faces and 12 depth 1 faces
-			result.Clear();
 			Cover.Circle(v, a, 1, scratch, result);
 			Assert.AreEqual(16, result.Count());
 			Assert.AreEqual(4, result.Where(o => o.Depth == 0).Count());

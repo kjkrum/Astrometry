@@ -16,6 +16,7 @@ namespace CodeConCarne.Astrometry.Sphere
 			Guard.Argument(depth, nameof(depth)).InRange(Mesh.MIN_DEPTH, Mesh.MAX_DEPTH);
 			var h = Halfspace.FromAngle(look, angle);
 			scratch.Clear();
+			result.Clear();
 			Octahedron.Init(scratch);
 			var q = scratch.Queue;
 			var c = scratch.Cover;
