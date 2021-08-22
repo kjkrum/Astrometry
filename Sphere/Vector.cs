@@ -4,41 +4,29 @@ namespace CodeConCarne.Astrometry.Sphere
 {
 	public readonly struct Vector
 	{
-		readonly public static Vector POS_X = new Vector(1, 0, 0, false);
-		readonly public static Vector POS_Y = new Vector(0, 1, 0, false);
-		readonly public static Vector POS_Z = new Vector(0, 0, 1, false);
-		readonly public static Vector NEG_X = new Vector(-1, 0, 0, false);
-		readonly public static Vector NEG_Y = new Vector(0, -1, 0, false);
-		readonly public static Vector NEG_Z = new Vector(0, 0, -1, false);
+		readonly public static Vector POS_X = new Vector(1, 0, 0);
+		readonly public static Vector POS_Y = new Vector(0, 1, 0);
+		readonly public static Vector POS_Z = new Vector(0, 0, 1);
+		readonly public static Vector NEG_X = new Vector(-1, 0, 0);
+		readonly public static Vector NEG_Y = new Vector(0, -1, 0);
+		readonly public static Vector NEG_Z = new Vector(0, 0, -1);
 
 		readonly public double X;
 		readonly public double Y;
 		readonly public double Z;
 
-		// TODO normalize all vectors?
-		// eliminating calls to Magnitude in Angle might be the most compelling
-		// reason to normalize all Vectors including Trixel vertices at all depths.
-		// this might give up a bit of indexing performance for faster computation
-		// of covers, which is probably a good deal.
-
-		internal Vector(double x, double y, double z, bool normalize)
+		private Vector(double x, double y, double z)
 		{
-			if(normalize)
-			{
-				var d = Math.Sqrt(x * x + y * y + z * z);
-				X = x / d;
-				Y = y / d;
-				Z = z / d;
-			}
-			else
-			{
-				X = x;
-				Y = y;
-				Z = z;
-			}
+			X = x;
+			Y = y;
+			Z = z;
 		}
 
-		public Vector(double x, double y, double z) : this(x, y, z, true) { }
+		public static Vector Normalize(double x, double y, double z)
+		{
+			var d = Math.Sqrt(x * x + y * y + z * z);
+			return new Vector(x / d, y / d, z / d);
+		}
 
 		internal Vector(double[] a, int i)
 		{
@@ -54,6 +42,11 @@ namespace CodeConCarne.Astrometry.Sphere
 			a[i + 2] = Z;
 		}
 
+		internal Vector Invert()
+		{
+			return new Vector(-X, -Y, -Z);
+		}
+
 		internal double Distance(Vector other)
 		{
 			var x = X - other.X;
@@ -62,39 +55,48 @@ namespace CodeConCarne.Astrometry.Sphere
 			return Math.Sqrt(x * x + y * y + z * z);
 		}
 
-		internal double Magnitude()
-		{
-			return Math.Sqrt(X * X + Y * Y + Z * Z);
-		}
-
 		internal double Dot(Vector other)
 		{
 			return X * other.X + Y * other.Y + Z * other.Z;
 		}
 
+
+		/// <summary>
+		/// Does not normalize. Do not expose.
+		/// </summary>
 		internal Vector Cross(Vector other)
 		{
 			var x = Y * other.Z - Z * other.Y;
 			var y = Z * other.X - X * other.Z;
 			var z = X * other.Y - Y * other.X;
-			return new Vector(x, y, z, false);
+			return new Vector(x, y, z);
 		}
 
+		/// <summary>
+		/// Does not normalize. Do not expose.
+		/// </summary>
 		internal Vector Subtract(Vector other)
 		{
-			return new Vector(X - other.X, Y - other.Y, Z - other.Z, false);
+			return new Vector(X - other.X, Y - other.Y, Z - other.Z);
 		}
 
-		internal Vector DivideBy(double value)
+		/// <summary>
+		/// Normalize vectors returned by <see cref="Cross(Vector)">Cross</see>
+		/// and <see cref="Subtract(Vector)">Subtract</see>.
+		/// </summary>
+		internal Vector Normalize()
 		{
-			return new Vector(X / value, Y / value, Z / value, false);
+			return Vector.Normalize(X, Y, Z);
 		}
 
 		public double Angle(Vector other)
 		{
+			// not needing to compute magnitudes here
+			// is one reason all vectors are normalized.
 			// when vectors are equal, dot can be like 1+2E16, making acos undefined
 			// likewise, when vectors are opposite, dot can be like -(1+2E16)
-			var d = Dot(other) / (Magnitude() * other.Magnitude());
+			// TODO there are probably better ways to test for this
+			var d = Dot(other);
 			if (Math.Abs(d - 1) < Mesh.EPSILON) return 0;
 			if (Math.Abs(d + 1) < Mesh.EPSILON) return Math.PI;
 			return Math.Acos(d);

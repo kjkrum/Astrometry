@@ -25,16 +25,23 @@ namespace CodeConCarne.Astrometry.Sphere
 			Distance = distance;
 		}
 
+		internal Halfspace Complement()
+		{
+			return new Halfspace(Normal.Invert(), Math.PI - Angle, -Distance);
+		}
+
 		internal static Halfspace FromAngle(Vector normal, double angle)
 		{
+			// TODO check params?
 			var distance = angle <= Math.PI / 2 ?
 				Math.Cos(angle) :
-				Math.Sin(angle - Math.PI / 2);
+				-Math.Sin(angle - Math.PI / 2);
 			return new Halfspace(normal, angle, distance);
 		}
 
 		internal static Halfspace FromDistance(Vector normal, double distance)
 		{
+			// TODO check params?
 			var angle = distance >= 0 ?
 				Math.Acos(distance) :
 				Math.Asin(distance) + Math.PI / 2;

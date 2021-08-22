@@ -43,20 +43,18 @@ namespace CodeConCarne.Astrometry
 		{
 			var id = Id << 2;
 			var depth = Depth + 1;
-			var normalize = depth < 8; // same condition in Mesh
-			var m0 = Midpoint(V1, V2, normalize);
-			var m1 = Midpoint(V2, V0, normalize);
-			var m2 = Midpoint(V0, V1, normalize);
-			// TODO check vertex order
+			var m0 = Midpoint(V1, V2);
+			var m1 = Midpoint(V2, V0);
+			var m2 = Midpoint(V0, V1);
 			queue.Enqueue(new Trixel(id + 0, depth, V0, m2, m1));
 			queue.Enqueue(new Trixel(id + 1, depth, V1, m0, m2));
 			queue.Enqueue(new Trixel(id + 2, depth, V2, m1, m0));
 			queue.Enqueue(new Trixel(id + 3, depth, m0, m1, m2));
 		}
 
-		private Vector Midpoint(Vector v0, Vector v1, bool normalize)
+		private Vector Midpoint(Vector v0, Vector v1)
 		{
-			var m = new Vector((v0.X + v1.X) / 2, (v0.Y + v1.Y) / 2, (v0.Z + v1.Z) / 2, normalize);
+			var m = Vector.Normalize((v0.X + v1.X) / 2, (v0.Y + v1.Y) / 2, (v0.Z + v1.Z) / 2);
 			return m;
 		}
 
