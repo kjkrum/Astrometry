@@ -12,11 +12,17 @@ namespace CodeConCarne.Astrometry.Sphere
 
 		public static void Circle(Vector look, double angle, int depth, Scratch scratch, List<Trixel> result)
 		{
-			Guard.Argument(angle, nameof(angle)).GreaterThan(0).LessThan(Math.PI);
+			Guard.Argument(angle, nameof(angle)).InRange(0, Math.PI);
 			Guard.Argument(depth, nameof(depth)).InRange(Mesh.MIN_DEPTH, Mesh.MAX_DEPTH);
-			var h = Halfspace.FromAngle(look, angle);
 			scratch.Clear();
 			result.Clear();
+			if (angle == 0) return;
+			if (angle == Math.PI)
+			{
+				Octahedron.FullSphere(result);
+				return;
+			}
+			var h = Halfspace.FromAngle(look, angle);
 			Octahedron.Init(scratch);
 			var q = scratch.Queue;
 			var c = scratch.Cover;

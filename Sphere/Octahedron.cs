@@ -1,4 +1,6 @@
-﻿namespace CodeConCarne.Astrometry.Sphere
+﻿using System.Collections.Generic;
+
+namespace CodeConCarne.Astrometry.Sphere
 {
 	internal static class Octahedron
 	{
@@ -46,6 +48,11 @@
 			{
 				scratch.Queue.Enqueue(T[i]);
 			}
+		}
+
+		internal static void FullSphere(List<Trixel> result)
+		{
+			result.AddRange(T);
 		}
 	}
 }
