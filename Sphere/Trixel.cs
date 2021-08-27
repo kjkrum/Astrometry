@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace CodeConCarne.Astrometry
+namespace CodeConCarne.Astrometry.Sphere
 {
 	public readonly struct Trixel
 	{

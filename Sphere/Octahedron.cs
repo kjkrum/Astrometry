@@ -12,7 +12,7 @@
 			Vector.NEG_Z
 		};
 
-		/* Vertex order is clockwise on the inside. */
+		/* Clockwise on the inside in a right-handed coordinate system. */
 
 		private readonly static Trixel[] T = new Trixel[]
 		{
