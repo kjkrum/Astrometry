@@ -1,7 +1,6 @@
 ﻿using Dawn;
 using System;
 using System.Runtime.CompilerServices;
-using static CodeConCarne.Astrometry.Sphere.Scratch;
 
 namespace CodeConCarne.Astrometry.Sphere
 {
@@ -10,51 +9,35 @@ namespace CodeConCarne.Astrometry.Sphere
 
 	public static class Mesh
 	{
+		public const int MIN_DEPTH = 0;
+		public const int MAX_DEPTH = 20;
+
 		// comment in reference implementation said this epsilon value failed, but it seems to work
 		internal const double EPSILON = 1E-15;
 
 		public static long Id(double x, double y, double z, int depth, Scratch scratch)
 		{
-			var a = scratch.Array;
-			a[C + 0] = x;
-			a[C + 1] = y;
-			a[C + 2] = z;
-			return Calc(depth, a);
+			return Calc(x, y, z, depth, scratch);
 		}
 
 		public static Trixel Trixel(double x, double y, double z, int depth, Scratch scratch)
 		{
-			var a = scratch.Array;
-			a[C + 0] = x;
-			a[C + 1] = y;
-			a[C + 2] = z;
-			var id = Calc(depth, a);
-			var v0 = new Vertex(a[V0 + 0], a[V0 + 1], a[V0 + 2]);
-			var v1 = new Vertex(a[V1 + 0], a[V1 + 1], a[V1 + 2]);
-			var v2 = new Vertex(a[V2 + 0], a[V2 + 1], a[V2 + 2]);
-			return new Trixel(id, depth, v0, v1, v2);
+			var id = Calc(x, y, z, depth, scratch);
+			return new Trixel(id, depth, scratch);
 		}
 
-		unsafe private static long Calc(int depth, double[] array)
+		unsafe private static long Calc(double x, double y, double z, int depth, Scratch scratch)
 		{
-			// from the paper:
-			//
 			// "A 64-bit integer can hold an HtmID up to depth 31. However, standard double precision
 			// transcendental functions break down at depth 26 where the trixel sides reach dimensions
 			// below 10E-15 (depth 26 is about 10 milli-arcseconds for astronomers or 30 centimeters
 			// on the earth’s surface.)"
 			//
 			// this manifests as no ray-triangle intersection at depth 25 or 26.
-			Guard.Argument(depth, nameof(depth)).InRange(0, 20);
-
-			fixed (double* a = array)
+			Guard.Argument(depth, nameof(depth)).InRange(MIN_DEPTH, MAX_DEPTH);
+			var id = Octahedron.Init(x, y, z, scratch);
+			fixed (double* a = scratch.Array)
 			{
-				var face = Face(a);
-				var id = 0b1000L + face;
-				Array.Copy(INIT, face * 9 + 0, array, V0, 3);
-				Array.Copy(INIT, face * 9 + 3, array, V1, 3);
-				Array.Copy(INIT, face * 9 + 6, array, V2, 3);
-
 				for (int d = 0; d < depth; ++d)
 				{
 					id <<= 2;
@@ -67,8 +50,10 @@ namespace CodeConCarne.Astrometry.Sphere
 					//
 					// in combination with other changes, normalizing at all
 					// depths greatly improves compatibility with reference
-					// implementation. may also be necessary for computing
-					// halfspaces.
+					// implementation. deeper normalization may also mean
+					// fewer tests in trixel-halfspace intersection.
+					//
+					// TODO test performance tradeoff between indexing and computing covers
 					if (d < 8)
 					{
 						Normalize(a);
@@ -229,21 +214,23 @@ namespace CodeConCarne.Astrometry.Sphere
 			a[dst + 2] = a[src + 2];
 		}
 
-		unsafe private static int Face(double* a)
-		{
-			return (a[C + 2] < 0 ? 4 : 0) + (a[C + 1] < 0 ? 2 : 0) + (a[C + 0] < 0 ? 1 : 0);
-		}
+		// order of offsets affects performance
+		// maybe proximity of reads and writes
+		internal const int V0 = 0;
+		internal const int M2 = 3;
+		internal const int V1 = 6;
+		internal const int M0 = 9;
+		internal const int V2 = 12;
+		internal const int M1 = 15;
 
-		private static readonly double[] INIT = new double[]
+		internal const int E = 18;
+		internal const int C = 21;
+		internal const int P = 24;
+		internal const int T = 27;
+
+		public class Scratch
 		{
-			0, 0, 1,    1, 0, 0,    0, 1, 0,
-			0, 0, 1,    0, 1, 0,    -1, 0, 0,
-			0, 0, 1,    0, -1, 0,   1, 0, 0,
-			0, 0, 1,    -1, 0, 0,   0, -1, 0,
-			0, 0, -1,   0, 1, 0,    1, 0, 0,
-			0, 0, -1,   -1, 0, 0,   0, 1, 0,
-			0, 0, -1,   1, 0, 0,    0, -1, 0,
-			0, 0, -1,   0, -1, 0,   -1, 0, 0
-		};
+			internal double[] Array = new double[30];
+		}
 	}
 }
