@@ -15,32 +15,38 @@ namespace Sphere.Test
 		[TestMethod]
 		public void OctahedronVertices()
 		{
-			Coords.Cartesian(0, 0, out double x, out double y, out double z);
+			Coords.AstroToSpherical(0, 0, out double azimuthal, out double polar);
+			Coords.SphericalToCartesian(azimuthal, polar, out double x, out double y, out double z);
 			Assert.AreEqual(1, x, EPSILON);
 			Assert.AreEqual(0, y, EPSILON);
 			Assert.AreEqual(0, z, EPSILON); // != 0
 
-			Coords.Cartesian(90, 0, out x, out y, out z);
+			Coords.AstroToSpherical(90, 0, out azimuthal, out polar);
+			Coords.SphericalToCartesian(azimuthal, polar, out x, out y, out z);
 			Assert.AreEqual(0, x, EPSILON); // != 0
 			Assert.AreEqual(1, y, EPSILON);
 			Assert.AreEqual(0, z, EPSILON); // != 0
 
-			Coords.Cartesian(180, 0, out x, out y, out z);
+			Coords.AstroToSpherical(180, 0, out azimuthal, out polar);
+			Coords.SphericalToCartesian(azimuthal, polar, out x, out y, out z);
 			Assert.AreEqual(-1, x, EPSILON);
 			Assert.AreEqual(0, y, EPSILON); // != 0
 			Assert.AreEqual(0, z, EPSILON); // != 0
 
-			Coords.Cartesian(270, 0, out x, out y, out z);
+			Coords.AstroToSpherical(270, 0, out azimuthal, out polar);
+			Coords.SphericalToCartesian(azimuthal, polar, out x, out y, out z);
 			Assert.AreEqual(0, x, EPSILON); // != 0
 			Assert.AreEqual(-1, y, EPSILON);
 			Assert.AreEqual(0, z, EPSILON); // != 0
 
-			Coords.Cartesian(0, 90, out x, out y, out z);
+			Coords.AstroToSpherical(0, 90, out azimuthal, out polar);
+			Coords.SphericalToCartesian(azimuthal, polar, out x, out y, out z);
 			Assert.AreEqual(0, x, EPSILON);
 			Assert.AreEqual(0, y, EPSILON);
 			Assert.AreEqual(1, z, EPSILON);
 
-			Coords.Cartesian(0, -90, out x, out y, out z);
+			Coords.AstroToSpherical(0, -90, out azimuthal, out polar);
+			Coords.SphericalToCartesian(azimuthal, polar, out x, out y, out z);
 			Assert.AreEqual(0, x, EPSILON); // != 0
 			Assert.AreEqual(0, y, EPSILON);
 			Assert.AreEqual(-1, z, EPSILON);

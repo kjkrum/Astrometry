@@ -1,5 +1,4 @@
-﻿using CodeConCarne.Astrometry;
-using CodeConCarne.Astrometry.Sphere;
+﻿using CodeConCarne.Astrometry.Sphere;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -15,9 +14,10 @@ namespace Sphere.Test
 		{
 			var v = Vector.Normalize(1, 1, 1);
 			var a = Math.PI / 10;
+			var h = Halfspace.FromAngle(v, a);
 			var scratch = new Cover.Scratch();
 			var result = new List<Trixel>();
-			Cover.Circle(v, a, 0, scratch, result);
+			Cover.Circle(h, 0, scratch, result);
 			Assert.AreEqual(1, result.Count);
 			var t = result.Single();
 			Assert.AreEqual(0b1000, t.Id);
@@ -30,9 +30,10 @@ namespace Sphere.Test
 			// large enough to overlap face 4
 			var v = Vector.Normalize(1, 1, 0.1);
 			var a = Math.PI / 10;
+			var h = Halfspace.FromAngle(v, a);
 			var scratch = new Cover.Scratch();
 			var result = new List<Trixel>();
-			Cover.Circle(v, a, 0, scratch, result);
+			Cover.Circle(h, 0, scratch, result);
 			var r = result.ToArray();
 			Assert.AreEqual(2, r.Length);
 			Assert.AreEqual(0b1000, r[0].Id);
@@ -44,14 +45,15 @@ namespace Sphere.Test
 		{
 			var v = Vector.POS_X;
 			var a = Math.PI * 0.6; // slightly more than half the sphere
+			var h = Halfspace.FromAngle(v, a);
 			var scratch = new Cover.Scratch();
 			var result = new List<Trixel>();
 			// at depth 0, expect the 8 depth 0 faces
-			Cover.Circle(v, a, 0, scratch, result);
+			Cover.Circle(h, 0, scratch, result);
 			Assert.AreEqual(8, result.Count());
 			Assert.AreEqual(8, result.Where(o => o.Depth == 0).Count());
 			// at depth 1, expect 4 depth 0 faces and 12 depth 1 faces
-			Cover.Circle(v, a, 1, scratch, result);
+			Cover.Circle(h, 1, scratch, result);
 			Assert.AreEqual(16, result.Count());
 			Assert.AreEqual(4, result.Where(o => o.Depth == 0).Count());
 			Assert.AreEqual(12, result.Where(o => o.Depth == 1).Count());
@@ -63,9 +65,10 @@ namespace Sphere.Test
 			// just checking that nothing blows up...
 			var v = Vector.Normalize(1, 1, 1);
 			var a = Math.PI / 10;
+			var h = Halfspace.FromAngle(v, a);
 			var scratch = new Cover.Scratch();
 			var result = new List<Trixel>();
-			Cover.Circle(v, a, 20, scratch, result);
+			Cover.Circle(h, 20, scratch, result);
 		}
 	}
 }

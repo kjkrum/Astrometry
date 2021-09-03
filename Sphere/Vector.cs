@@ -1,21 +1,25 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace CodeConCarne.Astrometry.Sphere
 {
 	public readonly struct Vector
 	{
-		readonly public static Vector POS_X = new Vector(1, 0, 0);
-		readonly public static Vector POS_Y = new Vector(0, 1, 0);
-		readonly public static Vector POS_Z = new Vector(0, 0, 1);
-		readonly public static Vector NEG_X = new Vector(-1, 0, 0);
-		readonly public static Vector NEG_Y = new Vector(0, -1, 0);
-		readonly public static Vector NEG_Z = new Vector(0, 0, -1);
+		public static readonly Vector POS_X = new Vector(1, 0, 0);
+		public static readonly Vector POS_Y = new Vector(0, 1, 0);
+		public static readonly Vector POS_Z = new Vector(0, 0, 1);
+		public static readonly Vector NEG_X = new Vector(-1, 0, 0);
+		public static readonly Vector NEG_Y = new Vector(0, -1, 0);
+		public static readonly Vector NEG_Z = new Vector(0, 0, -1);
 
-		readonly public double X;
-		readonly public double Y;
-		readonly public double Z;
+		public readonly double X;
+		public readonly double Y;
+		public readonly double Z;
 
-		private Vector(double x, double y, double z)
+		/// <summary>
+		/// Not normalized!
+		/// </summary>
+		internal Vector(double x, double y, double z)
 		{
 			X = x;
 			Y = y;
@@ -28,20 +32,48 @@ namespace CodeConCarne.Astrometry.Sphere
 			return new Vector(x / d, y / d, z / d);
 		}
 
-		internal Vector(double[] a, int i)
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal Vector Midpoint(Vector other)
 		{
-			X = a[i + 0];
-			Y = a[i + 1];
-			Z = a[i + 2];
+			var x = (X + other.X) / 2;
+			var y = (Y + other.Y) / 2;
+			var z = (Z + other.Z) / 2;
+			return Normalize(x, y, z);
 		}
 
-		internal void CopyTo(double[] a, int i)
+		/// <summary>
+		/// Not normalized!
+		/// </summary>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal Vector Subtract(Vector other)
 		{
-			a[i + 0] = X;
-			a[i + 1] = Y;
-			a[i + 2] = Z;
+			return new Vector(X - other.X, Y - other.Y, Z - other.Z);
 		}
 
+		/// <summary>
+		/// Not normalized!
+		/// </summary>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal Vector Cross(Vector other)
+		{
+			var x = Y * other.Z - Z * other.Y;
+			var y = Z * other.X - X * other.Z;
+			var z = X * other.Y - Y * other.X;
+			return new Vector(x, y, z);
+		}
+
+		internal Vector Normalize()
+		{
+			return Normalize(X, Y, Z);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal double Dot(Vector other)
+		{
+			return X * other.X + Y * other.Y + Z * other.Z;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal Vector Invert()
 		{
 			return new Vector(-X, -Y, -Z);
@@ -53,40 +85,6 @@ namespace CodeConCarne.Astrometry.Sphere
 			var y = Y - other.Y;
 			var z = Z - other.Z;
 			return Math.Sqrt(x * x + y * y + z * z);
-		}
-
-		internal double Dot(Vector other)
-		{
-			return X * other.X + Y * other.Y + Z * other.Z;
-		}
-
-
-		/// <summary>
-		/// Does not normalize. Do not expose.
-		/// </summary>
-		internal Vector Cross(Vector other)
-		{
-			var x = Y * other.Z - Z * other.Y;
-			var y = Z * other.X - X * other.Z;
-			var z = X * other.Y - Y * other.X;
-			return new Vector(x, y, z);
-		}
-
-		/// <summary>
-		/// Does not normalize. Do not expose.
-		/// </summary>
-		internal Vector Subtract(Vector other)
-		{
-			return new Vector(X - other.X, Y - other.Y, Z - other.Z);
-		}
-
-		/// <summary>
-		/// Normalize vectors returned by <see cref="Cross(Vector)">Cross</see>
-		/// and <see cref="Subtract(Vector)">Subtract</see>.
-		/// </summary>
-		internal Vector Normalize()
-		{
-			return Vector.Normalize(X, Y, Z);
 		}
 
 		public double Angle(Vector other)

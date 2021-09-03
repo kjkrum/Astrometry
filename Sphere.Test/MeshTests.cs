@@ -7,31 +7,37 @@ namespace Sphere.Test
 	[TestClass]
 	public class MeshTests
 	{
+		private void RandomPoints(int n, out double[] ax, out double[] ay, out double[] az)
+		{
+			ax = new double[n];
+			ay = new double[n];
+			az = new double[n];
+			var rand = new Random();
+			for (int i = 0; i < n; ++i)
+			{
+				Coords.Random(rand, out double azimuthal, out double polar);
+				Coords.SphericalToCartesian(azimuthal, polar, out double x, out double y, out double z);
+				ax[i] = x;
+				ay[i] = y;
+				az[i] = z;
+			}
+		}
+
 		/// <summary>
 		/// Ad hoc performance test.
 		/// </summary>
 		[TestMethod]
 		public void Performance()
 		{
+			// with aggressive inlining in this version (same as array version)
+			// and array version normalizing at all depths (same as this version)
+			// performance is identical; consistently about 2.16 seconds on i7-3770
 			var n = 1_000_000;
-			var ax = new double[n];
-			var ay = new double[n];
-			var az = new double[n];
-			var rand = new Random();
-			for(int i = 0; i < n; ++i)
-			{
-				var ra = rand.NextDouble() * 360;
-				var dec = rand.NextDouble() * 180 - 90;
-				Coords.Cartesian(ra, dec, out var x, out var y, out var z);
-				ax[i] = x;
-				ay[i] = y;
-				az[i] = z;
-			}
-			var scratch = new Mesh.Scratch();
+			RandomPoints(n, out double[] ax, out double[] ay, out double[] az);
 			var start = DateTime.UtcNow;
 			for (int i = 0; i < n; ++i)
 			{
-				_ = Mesh.Id(ax[i], ay[i], az[i], 20, scratch);
+				_ = Mesh.Trixel(ax[i], ay[i], az[i], Mesh.MAX_DEPTH);
 			}
 			var end = DateTime.UtcNow;
 			var elapsed = end - start;
@@ -45,10 +51,9 @@ namespace Sphere.Test
 		[TestMethod]
 		public void AreaRatio()
 		{
-			var scratch = new Mesh.Scratch();
-			var corner = Mesh.Trixel(0, 0, 1, 20, scratch);
+			var corner = Mesh.Trixel(0, 0, 1, 20);
 			Assert.AreEqual(0b10000000000000000000000000000000000000000000L, corner.Id);
-			var middle = Mesh.Trixel(1, 1, 1, 20, scratch);
+			var middle = Mesh.Trixel(1, 1, 1, 20);
 			Assert.AreEqual(0b10001111111111111111111111111111111111111111L, middle.Id);
 			var ratio = middle.Area() / corner.Area();
 			Assert.AreEqual(2.1, Math.Round(ratio, 1));
@@ -62,33 +67,26 @@ namespace Sphere.Test
 		public void ChildDistribution()
 		{
 			var n = 1_000_000;
-			var d = 20;
-			var rand = new Random();
-			var scratch = new Mesh.Scratch();
+			RandomPoints(n, out double[] ax, out double[] ay, out double[] az);
+			var depth = Mesh.MAX_DEPTH;
 			var count = new int[4];
-			for(int i = 0; i < n; ++i)
+			for (int i = 0; i < n; ++i)
 			{
-				Coords.Random(rand, out var x, out var y, out var z);
-				var id = Mesh.Id(x, y, z, d, scratch);
-				for(int j = 0; j < d; ++j)
+				var t = Mesh.Trixel(ax[i], ay[i], az[i], depth);
+				var id = t.Id;
+				for (int d = 0; d < depth; ++d)
 				{
-					var v = id & 0b11;
-					count[v]++;
+					var j = id & 0b11;
+					count[j]++;
 					id >>= 2;
 				}
 			}
-			var sum = (double) count[0] + count[1] + count[2];
-			var mean = sum / 3;
-			// unsure why corner 0 tends to be slightly less frequent
-			for(int i = 0; i < 3; ++i)
+			// TODO determine why corner 0 is slightly less frequent
+			for (var i = 0; i < 3; ++i)
 			{
-				var corner = count[i] / mean;
-				Assert.IsTrue(corner > 0.997);
-				Assert.IsTrue(corner < 1.003);
+				Assert.IsTrue(count[i] > 4_900_000 && count[i] < 5_000_000);
 			}
-			var center = count[3] / sum;
-			Assert.IsTrue(center > 0.344);
-			Assert.IsTrue(center < 0.346); // larger at shallower depths
+			Assert.IsTrue(count[3] > 5_100_000 && count[3] < 5_200_000);
 		}
 	}
 }

@@ -1,5 +1,4 @@
 ﻿using Dawn;
-using System;
 using System.Runtime.CompilerServices;
 
 namespace CodeConCarne.Astrometry.Sphere
@@ -9,228 +8,73 @@ namespace CodeConCarne.Astrometry.Sphere
 
 	public static class Mesh
 	{
+		// comment in reference implementation said this epsilon value "failed"
+		internal const double EPSILON = 1E-15;
 		public const int MIN_DEPTH = 0;
 		public const int MAX_DEPTH = 20;
 
-		// comment in reference implementation said this epsilon value failed, but it seems to work
-		internal const double EPSILON = 1E-15;
-
-		public static long Id(double x, double y, double z, int depth, Scratch scratch)
+		public static Trixel Trixel(double x, double y, double z, int depth)
 		{
-			return Calc(x, y, z, depth, scratch);
-		}
-
-		public static Trixel Trixel(double x, double y, double z, int depth, Scratch scratch)
-		{
-			var id = Calc(x, y, z, depth, scratch);
-			return new Trixel(id, depth, scratch);
-		}
-
-		unsafe private static long Calc(double x, double y, double z, int depth, Scratch scratch)
-		{
-			// "A 64-bit integer can hold an HtmID up to depth 31. However, standard double precision
-			// transcendental functions break down at depth 26 where the trixel sides reach dimensions
-			// below 10E-15 (depth 26 is about 10 milli-arcseconds for astronomers or 30 centimeters
-			// on the earth’s surface.)"
-			//
-			// this manifests as no ray-triangle intersection at depth 25 or 26.
 			Guard.Argument(depth, nameof(depth)).InRange(MIN_DEPTH, MAX_DEPTH);
-			var id = Octahedron.Init(x, y, z, scratch);
-			fixed (double* a = scratch.Array)
+			var t = Octahedron.Init(x, y, z);
+			var ray = new Vector(x, y, z);
+			for (int d = 0; d < depth; ++d)
 			{
-				for (int d = 0; d < depth; ++d)
+				t.Midpoints(out Vector m0, out Vector m1, out Vector m2);
+				// middle first because it's slightly larger
+				if(Intersect(ray, m0, m1, m2))
 				{
-					id <<= 2;
-					Midpoints(a);
-					// "Beyond depth 7, the curvature becomes irrelevant..."
-					//
-					// only normalizing below depth 4 still produces a good
-					// distribution, with a middle to corner area ratio of
-					// 2.113 instead of 2.106.
-					//
-					// in combination with other changes, normalizing at all
-					// depths greatly improves compatibility with reference
-					// implementation. deeper normalization may also mean
-					// fewer tests in trixel-halfspace intersection.
-					//
-					// TODO test performance tradeoff between indexing and computing covers
-					if (d < 8)
-					{
-						Normalize(a);
-					}
-
-					// middle first because it's slightly larger
-					// size difference between middle and corners is greater at shallower depths
-					// but even at depth 20, IDs consist of about 34% middle children overall
-					if (Intersect(a, M0, M1, M2))
-					{
-						id += 3;
-						Copy(a, M0, V0);
-						Copy(a, M1, V1);
-						Copy(a, M2, V2);
-						continue;
-					}
-
-					// corner 0
-					if (Intersect(a, V0, M2, M1))
-					{
-						Copy(a, M2, V1);
-						Copy(a, M1, V2);
-						continue;
-					}
-
-					// corner 1
-					if (Intersect(a, V1, M0, M2))
-					{
-						id += 1;
-						Copy(a, V1, V0);
-						Copy(a, M0, V1);
-						Copy(a, M2, V2);
-						continue;
-					}
-
-					// corner 2
-#if DEBUG
-					if (Intersect(a, V2, M1, M0))
-					{
-#endif
-						id += 2;
-						Copy(a, V2, V0);
-						Copy(a, M1, V1);
-						Copy(a, M0, V2);
-#if DEBUG
-						continue;
-					}
-					throw new Exception("no intersection found");
-#endif
+					t = new Trixel((t.Id << 2) + 3, t.Depth + 1, m0, m1, m2);
+					continue;
 				}
-				return id;
+				// corner 0
+				if (Intersect(ray, t.V0, m2, m1))
+				{
+					t = new Trixel(t.Id << 2, t.Depth + 1, t.V0, m2, m1);
+					continue;
+				}
+				// corner 1
+				if (Intersect(ray, t.V1, m0, m2))
+				{
+					t = new Trixel((t.Id << 2) + 1, t.Depth + 1, t.V1, m0, m2);
+					continue;
+				}
+				// corner 2
+				// assume match in release build
+#if DEBUG
+				if (Intersect(ray, t.V2, m1, m0))
+				{
+#endif
+					t = new Trixel((t.Id << 2) + 2, t.Depth + 1, t.V2, m1, m0);
+#if DEBUG
+					continue;
+				}
+				throw new System.Exception("no intersection found");
+#endif
 			}
+			return t;
 		}
 
 		// nice explanation of Möller-Trumbore
 		// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		unsafe private static bool Intersect(double* a, int v0, int v1, int v2)
+		private static bool Intersect(Vector ray, Vector v0, Vector v1, Vector v2)
 		{
-			// switched edges when excluding backface intersection
-			// TODO double check that triangles face inward in the vertex order of popular 3D libs
-			Subtract(a, v1, v0, E); // was E1
-			Cross(a, C, E, P); // was E1
-			Subtract(a, v2, v0, E); // all E0 from here
-			var det = Dot(a, E, P);
-			// if determinant is near zero, ray misses triangle
-			// if determinant is negative, triangle is back facing
-			if (det < EPSILON) return false;
-			var invDet = 1 / det;
-			Negate(a, v0, T);
-			var u = Dot(a, T, P) * invDet;
+			var e = v1.Subtract(v0);
+			var p = ray.Cross(e);
+			e = v2.Subtract(v0);
+			var det = e.Dot(p);
+			//if (det < EPSILON) return false;
+			if (det < 0) return false;
+			det = 1 / det;
+			var t = v0.Invert();
+			var u = t.Dot(p) * det;
+			// TODO use epsilon here, or don't use it above?
 			if (u < 0 || u > 1) return false;
-			Cross(a, T, E, P); // Q reuses P
-			var v = Dot(a, C, P) * invDet;
+			p = t.Cross(e);
+			var v = ray.Dot(p) * det;
 			return v >= 0 && u + v <= 1;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		unsafe private static void Negate(double* a, int value, int result)
-		{
-			a[result + 0] = -a[value + 0];
-			a[result + 1] = -a[value + 1];
-			a[result + 2] = -a[value + 2];
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		unsafe private static void Cross(double* a, int left, int right, int result)
-		{
-			a[result + 0] = a[left + 1] * a[right + 2] - a[left + 2] * a[right + 1];
-			a[result + 1] = a[left + 2] * a[right + 0] - a[left + 0] * a[right + 2];
-			a[result + 2] = a[left + 0] * a[right + 1] - a[left + 1] * a[right + 0];
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		unsafe private static double Dot(double* a, int left, int right)
-		{
-			return a[left + 0] * a[right + 0] + a[left + 1] * a[right + 1] + a[left + 2] * a[right + 2];
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		unsafe private static void Subtract(double* a, int left, int right, int result)
-		{
-			a[result + 0] = a[left + 0] - a[right + 0];
-			a[result + 1] = a[left + 1] - a[right + 1];
-			a[result + 2] = a[left + 2] - a[right + 2];
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		unsafe private static void Midpoints(double* a)
-		{
-			a[M0 + 0] = (a[V1 + 0] + a[V2 + 0]) / 2;
-			a[M0 + 1] = (a[V1 + 1] + a[V2 + 1]) / 2;
-			a[M0 + 2] = (a[V1 + 2] + a[V2 + 2]) / 2;
-
-			a[M1 + 0] = (a[V2 + 0] + a[V0 + 0]) / 2;
-			a[M1 + 1] = (a[V2 + 1] + a[V0 + 1]) / 2;
-			a[M1 + 2] = (a[V2 + 2] + a[V0 + 2]) / 2;
-
-			a[M2 + 0] = (a[V0 + 0] + a[V1 + 0]) / 2;
-			a[M2 + 1] = (a[V0 + 1] + a[V1 + 1]) / 2;
-			a[M2 + 2] = (a[V0 + 2] + a[V1 + 2]) / 2;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		unsafe private static void Normalize(double* a)
-		{
-			var d = Distance(a, M0);
-			a[M0 + 0] /= d;
-			a[M0 + 1] /= d;
-			a[M0 + 2] /= d;
-
-			d = Distance(a, M1);
-			a[M1 + 0] /= d;
-			a[M1 + 1] /= d;
-			a[M1 + 2] /= d;
-
-			d = Distance(a, M2);
-			a[M2 + 0] /= d;
-			a[M2 + 1] /= d;
-			a[M2 + 2] /= d;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		unsafe private static double Distance(double* a, int i)
-		{
-			var x = a[i + 0];
-			var y = a[i + 1];
-			var z = a[i + 2];
-			return Math.Sqrt(x * x + y * y + z * z);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		unsafe private static void Copy(double* a, int src, int dst)
-		{
-			a[dst + 0] = a[src + 0];
-			a[dst + 1] = a[src + 1];
-			a[dst + 2] = a[src + 2];
-		}
-
-		// order of offsets affects performance
-		// maybe proximity of reads and writes
-		internal const int V0 = 0;
-		internal const int M2 = 3;
-		internal const int V1 = 6;
-		internal const int M0 = 9;
-		internal const int V2 = 12;
-		internal const int M1 = 15;
-
-		internal const int E = 18;
-		internal const int C = 21;
-		internal const int P = 24;
-		internal const int T = 27;
-
-		public class Scratch
-		{
-			internal double[] Array = new double[30];
 		}
 	}
 }

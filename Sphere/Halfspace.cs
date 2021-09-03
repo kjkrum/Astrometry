@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dawn;
+using System;
 
 namespace CodeConCarne.Astrometry.Sphere
 {
@@ -12,11 +13,11 @@ namespace CodeConCarne.Astrometry.Sphere
 	/// the halfspace’s bounding plane, and the distance to the plane from the
 	/// origin along the vector."
 	/// </summary>
-	internal readonly struct Halfspace
+	public readonly struct Halfspace
 	{
-		internal readonly Vector Normal;
-		internal readonly double Angle;
-		internal readonly double Distance;
+		public readonly Vector Normal;
+		public readonly double Angle;
+		public readonly double Distance;
 
 		private Halfspace(Vector normal, double angle, double distance)
 		{
@@ -30,18 +31,18 @@ namespace CodeConCarne.Astrometry.Sphere
 			return new Halfspace(Normal.Invert(), Math.PI - Angle, -Distance);
 		}
 
-		internal static Halfspace FromAngle(Vector normal, double angle)
+		public static Halfspace FromAngle(Vector normal, double angle)
 		{
-			// TODO check params?
+			Guard.Argument(angle, nameof(angle)).InRange(0, Math.PI);
 			var distance = angle <= Math.PI / 2 ?
 				Math.Cos(angle) :
 				-Math.Sin(angle - Math.PI / 2);
 			return new Halfspace(normal, angle, distance);
 		}
 
-		internal static Halfspace FromDistance(Vector normal, double distance)
+		public static Halfspace FromDistance(Vector normal, double distance)
 		{
-			// TODO check params?
+			Guard.Argument(distance, nameof(distance)).InRange(-1, 1);
 			var angle = distance >= 0 ?
 				Math.Acos(distance) :
 				Math.Asin(distance) + Math.PI / 2;
