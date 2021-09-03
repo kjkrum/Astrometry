@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace CodeConCarne.Astrometry.Sphere.V2
@@ -26,6 +27,17 @@ namespace CodeConCarne.Astrometry.Sphere.V2
 			m0 = V1.Midpoint(V2);
 			m1 = V2.Midpoint(V0);
 			m2 = V0.Midpoint(V1);
+		}
+
+		internal void EnqueueChildren(Queue<Trixel> queue)
+		{
+			var id = Id << 2;
+			var depth = Depth + 1;
+			Midpoints(out Vector m0, out Vector m1, out Vector m2);
+			queue.Enqueue(new Trixel(id + 0, depth, V0, m2, m1));
+			queue.Enqueue(new Trixel(id + 1, depth, V1, m0, m2));
+			queue.Enqueue(new Trixel(id + 2, depth, V2, m1, m0));
+			queue.Enqueue(new Trixel(id + 3, depth, m0, m1, m2));
 		}
 
 		public double Area()

@@ -26,7 +26,7 @@ namespace CodeConCarne.Astrometry.Sphere.V2
 			Z = z;
 		}
 
-		internal Vector Normalize(double x, double y, double z)
+		public static Vector Normalize(double x, double y, double z)
 		{
 			var d = Math.Sqrt(x * x + y * y + z * z);
 			return new Vector(x / d, y / d, z / d);
@@ -62,6 +62,11 @@ namespace CodeConCarne.Astrometry.Sphere.V2
 			return new Vector(x, y, z);
 		}
 
+		internal Vector Normalize()
+		{
+			return Normalize(X, Y, Z);
+		}
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal double Dot(Vector other)
 		{
@@ -80,6 +85,19 @@ namespace CodeConCarne.Astrometry.Sphere.V2
 			var y = Y - other.Y;
 			var z = Z - other.Z;
 			return Math.Sqrt(x * x + y * y + z * z);
+		}
+
+		public double Angle(Vector other)
+		{
+			// not needing to compute magnitudes here
+			// is one reason all vectors are normalized.
+			// when vectors are equal, dot can be like 1+2E16, making acos undefined
+			// likewise, when vectors are opposite, dot can be like -(1+2E16)
+			// TODO there are probably better ways to test for this
+			var d = Dot(other);
+			if (Math.Abs(d - 1) < Mesh.EPSILON) return 0;
+			if (Math.Abs(d + 1) < Mesh.EPSILON) return Math.PI;
+			return Math.Acos(d);
 		}
 	}
 }

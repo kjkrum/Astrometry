@@ -1,8 +1,10 @@
-﻿namespace CodeConCarne.Astrometry.Sphere.V2
+﻿using System.Collections.Generic;
+
+namespace CodeConCarne.Astrometry.Sphere.V2
 {
 	internal static class Octahedron
 	{
-		private readonly static Vector[] V = new Vector[]
+		private static readonly Vector[] V = new Vector[]
 		{
 			Vector.POS_Z,
 			Vector.POS_X,
@@ -14,7 +16,7 @@
 
 		/* Clockwise on the inside in a right-handed coordinate system. */
 
-		private readonly static Trixel[] T = new Trixel[]
+		private static readonly Trixel[] T = new Trixel[]
 		{
 			new Trixel(0b1000, 0, V[0], V[1], V[2]),
 			new Trixel(0b1001, 0, V[0], V[2], V[3]),
@@ -29,6 +31,19 @@
 		internal static Trixel Init(double x, double y, double z)
 		{
 			return T[(z < 0 ? 4 : 0) + (y < 0 ? 2 : 0) + (x < 0 ? 1 : 0)];
+		}
+
+		internal static void Init(List<Trixel> list)
+		{
+			list.AddRange(T);
+		}
+
+		internal static void Init(Queue<Trixel> queue)
+		{
+			foreach(var t in T)
+			{
+				queue.Enqueue(t);
+			}
 		}
 	}
 }
