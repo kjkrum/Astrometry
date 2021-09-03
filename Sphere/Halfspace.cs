@@ -15,11 +15,11 @@ namespace CodeConCarne.Astrometry.Sphere
 	/// </summary>
 	public readonly struct Halfspace
 	{
-		public readonly Vector Normal;
+		public readonly UnitVector Normal;
 		public readonly double Angle;
 		public readonly double Distance;
 
-		private Halfspace(Vector normal, double angle, double distance)
+		private Halfspace(UnitVector normal, double angle, double distance)
 		{
 			Normal = normal;
 			Angle = angle;
@@ -31,7 +31,7 @@ namespace CodeConCarne.Astrometry.Sphere
 			return new Halfspace(Normal.Invert(), Math.PI - Angle, -Distance);
 		}
 
-		public static Halfspace FromAngle(Vector normal, double angle)
+		public static Halfspace FromAngle(UnitVector normal, double angle)
 		{
 			Guard.Argument(angle, nameof(angle)).InRange(0, Math.PI);
 			var distance = angle <= Math.PI / 2 ?
@@ -40,7 +40,7 @@ namespace CodeConCarne.Astrometry.Sphere
 			return new Halfspace(normal, angle, distance);
 		}
 
-		public static Halfspace FromDistance(Vector normal, double distance)
+		public static Halfspace FromDistance(UnitVector normal, double distance)
 		{
 			Guard.Argument(distance, nameof(distance)).InRange(-1, 1);
 			var angle = distance >= 0 ?

@@ -4,14 +4,14 @@ namespace CodeConCarne.Astrometry.Sphere
 {
 	internal static class Octahedron
 	{
-		private static readonly Vector[] V = new Vector[]
+		private static readonly UnitVector[] V = new UnitVector[]
 		{
-			Vector.POS_Z,
-			Vector.POS_X,
-			Vector.POS_Y,
-			Vector.NEG_X,
-			Vector.NEG_Y,
-			Vector.NEG_Z
+			UnitVector.POS_Z,
+			UnitVector.POS_X,
+			UnitVector.POS_Y,
+			UnitVector.NEG_X,
+			UnitVector.NEG_Y,
+			UnitVector.NEG_Z
 		};
 
 		/* Clockwise on the inside in a right-handed coordinate system. */

@@ -8,11 +8,11 @@ namespace CodeConCarne.Astrometry.Sphere
 	{
 		readonly public long Id;
 		readonly public int Depth;
-		readonly public Vector V0;
-		readonly public Vector V1;
-		readonly public Vector V2;
+		readonly public UnitVector V0;
+		readonly public UnitVector V1;
+		readonly public UnitVector V2;
 
-		internal Trixel(long id, int depth, Vector v0, Vector v1, Vector v2)
+		internal Trixel(long id, int depth, UnitVector v0, UnitVector v1, UnitVector v2)
 		{
 			Id = id;
 			Depth = depth;
@@ -22,7 +22,7 @@ namespace CodeConCarne.Astrometry.Sphere
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal void Midpoints(out Vector m0, out Vector m1, out Vector m2)
+		internal void Midpoints(out UnitVector m0, out UnitVector m1, out UnitVector m2)
 		{
 			m0 = V1.Midpoint(V2);
 			m1 = V2.Midpoint(V0);
@@ -33,7 +33,7 @@ namespace CodeConCarne.Astrometry.Sphere
 		{
 			var id = Id << 2;
 			var depth = Depth + 1;
-			Midpoints(out Vector m0, out Vector m1, out Vector m2);
+			Midpoints(out UnitVector m0, out UnitVector m1, out UnitVector m2);
 			queue.Enqueue(new Trixel(id + 0, depth, V0, m2, m1));
 			queue.Enqueue(new Trixel(id + 1, depth, V1, m0, m2));
 			queue.Enqueue(new Trixel(id + 2, depth, V2, m1, m0));

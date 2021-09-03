@@ -12,7 +12,7 @@ namespace Sphere.Test
 		[TestMethod]
 		public void TestCapFullyInside()
 		{
-			var v = Vector.Normalize(1, 1, 1);
+			var v = UnitVector.Direction(1, 1, 1);
 			var a = Math.PI / 10;
 			var h = Halfspace.FromAngle(v, a);
 			var scratch = new Cover.Scratch();
@@ -28,7 +28,7 @@ namespace Sphere.Test
 		{
 			// cap near the edge of face 0,
 			// large enough to overlap face 4
-			var v = Vector.Normalize(1, 1, 0.1);
+			var v = UnitVector.Direction(1, 1, 0.1);
 			var a = Math.PI / 10;
 			var h = Halfspace.FromAngle(v, a);
 			var scratch = new Cover.Scratch();
@@ -43,7 +43,7 @@ namespace Sphere.Test
 		[TestMethod]
 		public void TestNegativeCap()
 		{
-			var v = Vector.POS_X;
+			var v = UnitVector.POS_X;
 			var a = Math.PI * 0.6; // slightly more than half the sphere
 			var h = Halfspace.FromAngle(v, a);
 			var scratch = new Cover.Scratch();
@@ -63,7 +63,7 @@ namespace Sphere.Test
 		public void TestDeepCover()
 		{
 			// just checking that nothing blows up...
-			var v = Vector.Normalize(1, 1, 1);
+			var v = UnitVector.Direction(1, 1, 1);
 			var a = Math.PI / 10;
 			var h = Halfspace.FromAngle(v, a);
 			var scratch = new Cover.Scratch();

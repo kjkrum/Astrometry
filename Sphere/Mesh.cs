@@ -17,10 +17,10 @@ namespace CodeConCarne.Astrometry.Sphere
 		{
 			Guard.Argument(depth, nameof(depth)).InRange(MIN_DEPTH, MAX_DEPTH);
 			var t = Octahedron.Init(x, y, z);
-			var ray = new Vector(x, y, z);
+			var ray = UnitVector.Direction(x, y, z);
 			for (int d = 0; d < depth; ++d)
 			{
-				t.Midpoints(out Vector m0, out Vector m1, out Vector m2);
+				t.Midpoints(out UnitVector m0, out UnitVector m1, out UnitVector m2);
 				// middle first because it's slightly larger
 				if(Intersect(ray, m0, m1, m2))
 				{
@@ -59,7 +59,7 @@ namespace CodeConCarne.Astrometry.Sphere
 		// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static bool Intersect(Vector ray, Vector v0, Vector v1, Vector v2)
+		private static bool Intersect(UnitVector ray, UnitVector v0, UnitVector v1, UnitVector v2)
 		{
 			var e = v1.Subtract(v0);
 			var p = ray.Cross(e);
