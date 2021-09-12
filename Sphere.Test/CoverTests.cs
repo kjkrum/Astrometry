@@ -70,5 +70,21 @@ namespace Sphere.Test
 			var result = new List<Trixel>();
 			Cover.Circle(h, 20, scratch, result);
 		}
+
+		[TestMethod]
+		public void TestIssue1Fixed()
+		{
+			// https://github.com/kjkrum/Astrometry/issues/1
+			var v = UnitVector.POS_Z;
+			var d = 0.4135585f;
+			var h = Halfspace.FromDistance(v, d);
+			// sanity check that this is the halfspace that showed the problem in the visualizer
+			Assert.AreEqual(0.3642857f * Math.PI, h.Angle, 0.0001);
+			var scratch = new Cover.Scratch();
+			var result = new List<Trixel>();
+			Cover.Circle(h, 3, scratch, result);
+			// this was one of the trixels that was overshooting
+			Assert.IsFalse(result.Any(o => o.Id == 0b1010010101));
+		}
 	}
 }
