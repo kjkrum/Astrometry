@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
 
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -15,6 +15,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Sphere\Sphere.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="SphericalHtm">
+      <HintPath>lib\SphericalHtm.dll</HintPath>
+    </Reference>
+    <Reference Include="SphericalLib">
+      <HintPath>lib\SphericalLib.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

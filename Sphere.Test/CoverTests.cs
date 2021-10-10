@@ -20,7 +20,7 @@ namespace Sphere.Test
 			Cover.Circle(h, 0, scratch, result);
 			Assert.AreEqual(1, result.Count);
 			var t = result.Single();
-			Assert.AreEqual(0b1000, t.Id);
+			Assert.AreEqual(0b1111, t.Id);
 		}
 
 		[TestMethod]
@@ -36,8 +36,8 @@ namespace Sphere.Test
 			Cover.Circle(h, 0, scratch, result);
 			var r = result.ToArray();
 			Assert.AreEqual(2, r.Length);
-			Assert.AreEqual(0b1000, r[0].Id);
-			Assert.AreEqual(0b1100, r[1].Id);
+			Assert.AreEqual(0b1111, r[0].Id);
+			Assert.AreEqual(0b1000, r[1].Id);
 		}
 
 		[TestMethod]

@@ -1,6 +1,7 @@
 ﻿using CodeConCarne.Astrometry.Sphere;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Linq;
 
 namespace Sphere.Test
 {
@@ -29,11 +30,12 @@ namespace Sphere.Test
 		[TestMethod]
 		public void Performance()
 		{
-			// with aggressive inlining in this version (same as array version)
-			// and array version normalizing at all depths (same as this version)
-			// performance is identical; consistently about 2.16 seconds on i7-3770
 			var n = 1_000_000;
 			RandomPoints(n, out double[] ax, out double[] ay, out double[] az);
+
+			// performance on i7-3770
+			// 2.2 seconds on Core 3.1
+			// 3.3 seconds on Framework 4.7.2
 			var start = DateTime.UtcNow;
 			for (int i = 0; i < n; ++i)
 			{
@@ -41,7 +43,17 @@ namespace Sphere.Test
 			}
 			var end = DateTime.UtcNow;
 			var elapsed = end - start;
-			Console.WriteLine(elapsed);
+			Console.WriteLine($"this lib: {elapsed}");
+
+			// 2.4 seconds on Framework 4.7.2
+			start = DateTime.UtcNow;
+			for (int i = 0; i < n; ++i)
+			{
+				_ = Spherical.Htm.Trixel.CartesianToHid(ax[i], ay[i], az[i], Mesh.MAX_DEPTH);
+			}
+			end = DateTime.UtcNow;
+			elapsed = end - start;
+			Console.WriteLine($"reference lib: {elapsed}");
 		}
 
 		/// <summary>
@@ -52,9 +64,9 @@ namespace Sphere.Test
 		public void AreaRatio()
 		{
 			var corner = Mesh.Trixel(0, 0, 1, 20);
-			Assert.AreEqual(0b10000000000000000000000000000000000000000000L, corner.Id);
+			Assert.AreEqual(0b11110000000000000000000000000000000000000000L, corner.Id);
 			var middle = Mesh.Trixel(1, 1, 1, 20);
-			Assert.AreEqual(0b10001111111111111111111111111111111111111111L, middle.Id);
+			Assert.AreEqual(0b11111111111111111111111111111111111111111111L, middle.Id);
 			var ratio = middle.Area() / corner.Area();
 			Assert.AreEqual(2.1, Math.Round(ratio, 1));
 		}
@@ -87,6 +99,32 @@ namespace Sphere.Test
 				Assert.IsTrue(count[i] > 4_900_000 && count[i] < 5_000_000);
 			}
 			Assert.IsTrue(count[3] > 5_100_000 && count[3] < 5_200_000);
+		}
+
+		/// <summary>
+		/// Around 160 different trixel IDs per million random coordinates.
+		/// </summary>
+		[TestMethod]
+		public void Compatibility()
+		{
+			var depth = Mesh.MAX_DEPTH;
+			var n = 1_000_000;
+			RandomPoints(n, out double[] ax, out double[] ay, out double[] az);
+			var freq = new int[depth];
+			for (int i = 0; i < n; ++i)
+			{
+				var actual = Mesh.Trixel(ax[i], ay[i], az[i], depth).Id;
+				var expected = Spherical.Htm.Trixel.CartesianToHid(ax[i], ay[i], az[i], depth);
+				if(actual != expected)
+				{
+					var d = Math.Abs(actual - expected);
+					var j = depth - ((int) Math.Log(d, 2.0) / 2) - 1;
+					++freq[j];
+				}
+			}
+			var total = freq.Sum();
+			Assert.IsTrue(total < n / 1_000_000 * 180, "Compatibility got worse.");
+			Assert.IsTrue(total > n / 1_000_000 * 140, "Compatibility got better. Update the test.");
 		}
 	}
 }
